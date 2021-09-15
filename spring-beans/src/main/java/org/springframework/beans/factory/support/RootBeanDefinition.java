@@ -179,6 +179,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 		super();
 		setBeanClass(beanClass);
 		setScope(scope);
+		// 设置 instanceSupplier 属性
 		setInstanceSupplier(instanceSupplier);
 	}
 

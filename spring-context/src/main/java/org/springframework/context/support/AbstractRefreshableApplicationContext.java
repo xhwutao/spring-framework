@@ -16,14 +16,14 @@
 
 package org.springframework.context.support;
 
-import java.io.IOException;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.lang.Nullable;
+
+import java.io.IOException;
 
 /**
  * Base class for {@link org.springframework.context.ApplicationContext}
@@ -113,21 +113,32 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 
 
 	/**
+	 * 实现执行此上下文的底层 bean 工厂的实际刷新，关闭先前的 bean 工厂（如果有）
+	 * 并为上下文生命周期的下一个阶段初始化一个新的 bean 工厂。
+	 *
 	 * This implementation performs an actual refresh of this context's underlying
 	 * bean factory, shutting down the previous bean factory (if any) and
 	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
+		//判断是否已有bean factory
 		if (hasBeanFactory()) {
+			//销毁beans
 			destroyBeans();
+			//关闭bean factory
 			closeBeanFactory();
 		}
 		try {
+			//实例化 DefaultListableBeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+			//设置序列化id
 			beanFactory.setSerializationId(getId());
+			//自定义bean工厂的一些属性（是否覆盖、是否允许循环依赖）
 			customizeBeanFactory(beanFactory);
+			//加载应用中的BeanDefinitions
 			loadBeanDefinitions(beanFactory);
+			//赋值当前bean factory
 			this.beanFactory = beanFactory;
 		}
 		catch (IOException ex) {

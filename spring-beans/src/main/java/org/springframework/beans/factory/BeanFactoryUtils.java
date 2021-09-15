@@ -16,19 +16,15 @@
 
 package org.springframework.beans.factory;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.BeansException;
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Convenience methods operating on bean factories, in particular
@@ -61,6 +57,8 @@ public abstract class BeanFactoryUtils {
 
 
 	/**
+	 * 返回给定的名称是否是工厂取消引用（以工厂取消引用前缀开头）。
+	 *
 	 * Return whether the given name is a factory dereference
 	 * (beginning with the factory dereference prefix).
 	 * @param name the name of the bean
@@ -72,6 +70,7 @@ public abstract class BeanFactoryUtils {
 	}
 
 	/**
+	 * 返回实际的 bean 名称，去除工厂取消引用前缀（如果有的话，如果找到，也会去除重复的工厂前缀）。
 	 * Return the actual bean name, stripping out the factory dereference
 	 * prefix (if any, also stripping repeated factory prefixes if found).
 	 * @param name the name of the bean
@@ -83,6 +82,9 @@ public abstract class BeanFactoryUtils {
 		if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 			return name;
 		}
+		// computeIfAbsent 方法，分成两种情况：
+		//      1. 未存在，则进行计算执行，并将结果添加到缓存、
+		//      2. 已存在，则直接返回，无需计算。
 		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
 			do {
 				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());

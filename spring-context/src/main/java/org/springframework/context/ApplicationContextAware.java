@@ -59,6 +59,10 @@ import org.springframework.beans.factory.Aware;
 public interface ApplicationContextAware extends Aware {
 
 	/**
+	 * 设置此对象运行所在的 ApplicationContext。通常此调用将用于初始化对象。
+	 * 在填充普通 bean 属性之后但在初始化回调之前调用，例如org.springframework.beans.factory.InitializingBean.afterPropertiesSet()或自定义初始化方法。
+	 * 在ResourceLoaderAware.setResourceLoader 、 ApplicationEventPublisherAware.setApplicationEventPublisher和MessageSourceAware之后调用（如果适用）。
+	 *
 	 * Set the ApplicationContext that this object runs in.
 	 * Normally this call will be used to initialize the object.
 	 * <p>Invoked after population of normal bean properties but before an init callback such

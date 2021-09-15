@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+group 'org.springframework'
+version '5.3.9'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile("org.aspectj:aspectjweaver")
+    compile(project(":spring-aop"))
+    compile(project(":spring-beans"))
+    compile(project(":spring-context"))
+    compile(project(":spring-core"))
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}

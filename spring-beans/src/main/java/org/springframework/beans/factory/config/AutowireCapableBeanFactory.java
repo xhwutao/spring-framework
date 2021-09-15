@@ -16,14 +16,14 @@
 
 package org.springframework.beans.factory.config;
 
-import java.util.Set;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.TypeConverter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.lang.Nullable;
+
+import java.util.Set;
 
 /**
  * Extension of the {@link org.springframework.beans.factory.BeanFactory}
@@ -303,6 +303,9 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 			throws BeansException;
 
 	/**
+	 * 将BeanPostProcessors应用于给定的现有 bean 实例，调用它们的postProcessAfterInitialization方法。
+	 * 返回的 bean 实例可能是原始实例的包装器。
+	 *
 	 * Apply {@link BeanPostProcessor BeanPostProcessors} to the given existing bean
 	 * instance, invoking their {@code postProcessAfterInitialization} methods.
 	 * The returned bean instance may be a wrapper around the original.

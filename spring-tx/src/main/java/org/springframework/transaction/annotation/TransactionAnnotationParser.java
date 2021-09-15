@@ -16,10 +16,10 @@
 
 package org.springframework.transaction.annotation;
 
-import java.lang.reflect.AnnotatedElement;
-
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.interceptor.TransactionAttribute;
+
+import java.lang.reflect.AnnotatedElement;
 
 /**
  * Strategy interface for parsing known transaction annotation types.
@@ -35,7 +35,7 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
  * @see Ejb3TransactionAnnotationParser
  * @see JtaTransactionAnnotationParser
  */
-public interface TransactionAnnotationParser {
+public interface  TransactionAnnotationParser {
 
 	/**
 	 * Determine whether the given class is a candidate for transaction attributes

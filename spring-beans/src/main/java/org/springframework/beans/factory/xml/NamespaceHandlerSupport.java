@@ -16,16 +16,15 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.lang.Nullable;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.lang.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Support class for implementing custom {@link NamespaceHandler NamespaceHandlers}.
@@ -64,23 +63,30 @@ public abstract class NamespaceHandlerSupport implements NamespaceHandler {
 
 
 	/**
+	 * 解析所提供的Element通过委托给BeanDefinitionParser被注册为Element 。
+	 *
 	 * Parses the supplied {@link Element} by delegating to the {@link BeanDefinitionParser} that is
 	 * registered for that {@link Element}.
 	 */
 	@Override
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		//获得元素对应的 BeanDefinitionParser 对象
 		BeanDefinitionParser parser = findParserForElement(element, parserContext);
+		//执行解析
 		return (parser != null ? parser.parse(element, parserContext) : null);
 	}
 
 	/**
+	 * 使用提供的Element的本地名称从寄存器实现中定位BeanDefinitionParser 。
 	 * Locates the {@link BeanDefinitionParser} from the register implementations using
 	 * the local name of the supplied {@link Element}.
 	 */
 	@Nullable
 	private BeanDefinitionParser findParserForElement(Element element, ParserContext parserContext) {
+		//获得元素名
 		String localName = parserContext.getDelegate().getLocalName(element);
+		//获得 BeanDefinitionParser 对象
 		BeanDefinitionParser parser = this.parsers.get(localName);
 		if (parser == null) {
 			parserContext.getReaderContext().fatal(
@@ -130,6 +136,8 @@ public abstract class NamespaceHandlerSupport implements NamespaceHandler {
 
 
 	/**
+	 * 子类可以调用它来注册提供的BeanDefinitionParser来处理指定的元素。 元素名称是本地（非命名空间限定）名称。
+	 *
 	 * Subclasses can call this to register the supplied {@link BeanDefinitionParser} to
 	 * handle the specified element. The element name is the local (non-namespace qualified)
 	 * name.

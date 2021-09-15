@@ -26,6 +26,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 对 bean 定义读取器实现有用的实用方法。 主要供内部使用。
+ *
  * Utility methods that are useful for bean definition reader implementations.
  * Mainly intended for internal use.
  *
@@ -57,12 +59,16 @@ public abstract class BeanDefinitionReaderUtils {
 	public static AbstractBeanDefinition createBeanDefinition(
 			@Nullable String parentName, @Nullable String className, @Nullable ClassLoader classLoader) throws ClassNotFoundException {
 
+		//创建 GenericBeanDefinition 对象
 		GenericBeanDefinition bd = new GenericBeanDefinition();
+		//设置 parentName
 		bd.setParentName(parentName);
+		//设置 beanClass
 		if (className != null) {
 			if (classLoader != null) {
 				bd.setBeanClass(ClassUtils.forName(className, classLoader));
 			}
+			//设置 beanClassName
 			else {
 				bd.setBeanClassName(className);
 			}
@@ -150,6 +156,8 @@ public abstract class BeanDefinitionReaderUtils {
 	}
 
 	/**
+	 * 使用给定的 bean 工厂注册给定的 bean 定义。
+	 *
 	 * Register the given bean definition with the given bean factory.
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with
@@ -159,10 +167,12 @@ public abstract class BeanDefinitionReaderUtils {
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
+		//注册 beanName
 		// Register bean definition under primary name.
 		String beanName = definitionHolder.getBeanName();
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
+		//注册 alias
 		// Register aliases for bean name, if any.
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {

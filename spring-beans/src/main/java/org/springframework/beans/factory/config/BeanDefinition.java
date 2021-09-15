@@ -283,6 +283,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	void setRole(int role);
 
 	/**
+	 * 获取此BeanDefinition的角色提示。 角色提示为框架和工具提供了特定BeanDefinition的角色和重要性的指示。
+	 *
 	 * Get the role hint for this {@code BeanDefinition}. The role hint
 	 * provides the frameworks as well as tools an indication of
 	 * the role and importance of a particular {@code BeanDefinition}.
