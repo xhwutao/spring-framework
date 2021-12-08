@@ -42,6 +42,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -102,14 +103,24 @@ public class HandlerMethod {
 	 * Create an instance from a bean instance and a method.
 	 */
 	public HandlerMethod(Object bean, Method method) {
+		this(bean, method, null);
+	}
+
+	/**
+	 * Variant of {@link #HandlerMethod(Object, Method)} that
+	 * also accepts a {@link MessageSource} for use from sub-classes.
+	 * @since 5.3.10
+	 */
+	protected HandlerMethod(Object bean, Method method, @Nullable MessageSource messageSource) {
 		Assert.notNull(bean, "Bean is required");
 		Assert.notNull(method, "Method is required");
 		this.bean = bean;
 		this.beanFactory = null;
-		this.messageSource = null;
+		this.messageSource = messageSource;
 		this.beanType = ClassUtils.getUserClass(bean);
 		this.method = method;
 		this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
+		ReflectionUtils.makeAccessible(this.bridgedMethod);
 		this.parameters = initMethodParameters();
 		evaluateResponseStatus();
 		this.description = initDescription(this.beanType, this.method);
@@ -128,6 +139,7 @@ public class HandlerMethod {
 		this.beanType = ClassUtils.getUserClass(bean);
 		this.method = bean.getClass().getMethod(methodName, parameterTypes);
 		this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(this.method);
+		ReflectionUtils.makeAccessible(this.bridgedMethod);
 		this.parameters = initMethodParameters();
 		evaluateResponseStatus();
 		this.description = initDescription(this.beanType, this.method);
@@ -163,6 +175,7 @@ public class HandlerMethod {
 		this.beanType = ClassUtils.getUserClass(beanType);
 		this.method = method;
 		this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
+		ReflectionUtils.makeAccessible(this.bridgedMethod);
 		this.parameters = initMethodParameters();
 		evaluateResponseStatus();
 		this.description = initDescription(this.beanType, this.method);

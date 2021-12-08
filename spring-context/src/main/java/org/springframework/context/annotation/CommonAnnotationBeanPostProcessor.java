@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,22 +146,27 @@ import org.springframework.util.StringValueResolver;
 public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
 		implements InstantiationAwareBeanPostProcessor, BeanFactoryAware, Serializable {
 
+	// Defensive reference to JNDI API for JDK 9+ (optional java.naming module)
+	private static final boolean jndiPresent = ClassUtils.isPresent(
+			"javax.naming.InitialContext", CommonAnnotationBeanPostProcessor.class.getClassLoader());
+
+	private static final Set<Class<? extends Annotation>> resourceAnnotationTypes = new LinkedHashSet<>(4);
+
 	@Nullable
 	private static final Class<? extends Annotation> webServiceRefClass;
 
 	@Nullable
 	private static final Class<? extends Annotation> ejbClass;
 
-	private static final Set<Class<? extends Annotation>> resourceAnnotationTypes = new LinkedHashSet<>(4);
-
 	static {
-		webServiceRefClass = loadAnnotationType("javax.xml.ws.WebServiceRef");
-		ejbClass = loadAnnotationType("javax.ejb.EJB");
-
 		resourceAnnotationTypes.add(Resource.class);
+
+		webServiceRefClass = loadAnnotationType("javax.xml.ws.WebServiceRef");
 		if (webServiceRefClass != null) {
 			resourceAnnotationTypes.add(webServiceRefClass);
 		}
+
+		ejbClass = loadAnnotationType("javax.ejb.EJB");
 		if (ejbClass != null) {
 			resourceAnnotationTypes.add(ejbClass);
 		}
@@ -174,7 +179,8 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	private boolean alwaysUseJndiLookup = false;
 
-	private transient BeanFactory jndiFactory = new SimpleJndiBeanFactory();
+	@Nullable
+	private transient BeanFactory jndiFactory;
 
 	@Nullable
 	private transient BeanFactory resourceFactory;
@@ -199,6 +205,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		setInitAnnotationType(PostConstruct.class);
 		setDestroyAnnotationType(PreDestroy.class);
 		ignoreResourceType("javax.xml.ws.WebServiceContext");
+
+		// java.naming module present on JDK 9+?
+		if (jndiPresent) {
+			this.jndiFactory = new SimpleJndiBeanFactory();
+		}
 	}
 
 
@@ -332,7 +343,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 
-	private InjectionMetadata findResourceMetadata(String beanName, final Class<?> clazz, @Nullable PropertyValues pvs) {
+	private InjectionMetadata findResourceMetadata(String beanName, Class<?> clazz, @Nullable PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
@@ -352,7 +363,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return metadata;
 	}
 
-	private InjectionMetadata buildResourceMetadata(final Class<?> clazz) {
+	private InjectionMetadata buildResourceMetadata(Class<?> clazz) {
 		if (!AnnotationUtils.isCandidateClass(clazz, resourceAnnotationTypes)) {
 			return InjectionMetadata.EMPTY;
 		}
@@ -464,6 +475,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			public void releaseTarget(Object target) {
 			}
 		};
+
 		ProxyFactory pf = new ProxyFactory();
 		pf.setTargetSource(ts);
 		if (element.lookupType.isInterface()) {
@@ -484,12 +496,23 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	protected Object getResource(LookupElement element, @Nullable String requestingBeanName)
 			throws NoSuchBeanDefinitionException {
 
+		// JNDI lookup to perform?
+		String jndiName = null;
 		if (StringUtils.hasLength(element.mappedName)) {
-			return this.jndiFactory.getBean(element.mappedName, element.lookupType);
+			jndiName = element.mappedName;
 		}
-		if (this.alwaysUseJndiLookup) {
-			return this.jndiFactory.getBean(element.name, element.lookupType);
+		else if (this.alwaysUseJndiLookup) {
+			jndiName = element.name;
 		}
+		if (jndiName != null) {
+			if (this.jndiFactory == null) {
+				throw new NoSuchBeanDefinitionException(element.lookupType,
+						"No JNDI factory configured - specify the 'jndiFactory' property");
+			}
+			return this.jndiFactory.getBean(jndiName, element.lookupType);
+		}
+
+		// Regular resource autowiring
 		if (this.resourceFactory == null) {
 			throw new NoSuchBeanDefinitionException(element.lookupType,
 					"No resource factory configured - specify the 'resourceFactory' property");

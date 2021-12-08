@@ -147,7 +147,6 @@ public class UrlPathHelper {
 	 * Whether configured to remove ";" (semicolon) content from the request URI.
 	 */
 	public boolean shouldRemoveSemicolonContent() {
-		checkReadOnly();
 		return this.removeSemicolonContent;
 	}
 
@@ -190,7 +189,7 @@ public class UrlPathHelper {
 
 	/**
 	 * {@link #getLookupPathForRequest Resolve} the lookupPath and cache it in a
-	 * a request attribute with the key {@link #PATH_ATTRIBUTE} for subsequent
+	 * request attribute with the key {@link #PATH_ATTRIBUTE} for subsequent
 	 * access via {@link #getResolvedLookupPath(ServletRequest)}.
 	 * @param request the current request
 	 * @return the resolved path
@@ -291,11 +290,11 @@ public class UrlPathHelper {
 	 * i.e. the part of the request's URL beyond the part that called the servlet,
 	 * or "" if the whole URL has been used to identify the servlet.
 	 * <p>Detects include request URL if called within a RequestDispatcher include.
-	 * <p>E.g.: servlet mapping = "/*"; request URI = "/test/a" -> "/test/a".
-	 * <p>E.g.: servlet mapping = "/"; request URI = "/test/a" -> "/test/a".
-	 * <p>E.g.: servlet mapping = "/test/*"; request URI = "/test/a" -> "/a".
-	 * <p>E.g.: servlet mapping = "/test"; request URI = "/test" -> "".
-	 * <p>E.g.: servlet mapping = "/*.test"; request URI = "/a.test" -> "".
+	 * <p>E.g.: servlet mapping = "/*"; request URI = "/test/a" &rarr; "/test/a".
+	 * <p>E.g.: servlet mapping = "/"; request URI = "/test/a" &rarr; "/test/a".
+	 * <p>E.g.: servlet mapping = "/test/*"; request URI = "/test/a" &rarr; "/a".
+	 * <p>E.g.: servlet mapping = "/test"; request URI = "/test" &rarr; "".
+	 * <p>E.g.: servlet mapping = "/*.test"; request URI = "/a.test" &rarr; "".
 	 * @param request current HTTP request
 	 * @param pathWithinApp a precomputed path within the application
 	 * @return the path within the servlet mapping, or ""
@@ -406,16 +405,18 @@ public class UrlPathHelper {
 	 * </ul>
 	 */
 	private static String getSanitizedPath(final String path) {
-		int index = path.indexOf("//");
-		if (index >= 0) {
-			StringBuilder sanitized = new StringBuilder(path);
-			while (index != -1) {
-				sanitized.deleteCharAt(index);
-				index = sanitized.indexOf("//", index);
-			}
-			return sanitized.toString();
+		int start = path.indexOf("//");
+		if (start == -1) {
+			return path;
 		}
-		return path;
+		char[] content = path.toCharArray();
+		int slowIndex = start;
+		for (int fastIndex = start + 1; fastIndex < content.length; fastIndex++) {
+			if (content[fastIndex] != '/' || content[slowIndex] != '/') {
+				content[++slowIndex] = content[fastIndex];
+			}
+		}
+		return new String(content, 0, slowIndex + 1);
 	}
 
 	/**
@@ -533,7 +534,7 @@ public class UrlPathHelper {
 	 */
 	public String getOriginatingQueryString(HttpServletRequest request) {
 		if ((request.getAttribute(WebUtils.FORWARD_REQUEST_URI_ATTRIBUTE) != null) ||
-			(request.getAttribute(WebUtils.ERROR_REQUEST_URI_ATTRIBUTE) != null)) {
+				(request.getAttribute(WebUtils.ERROR_REQUEST_URI_ATTRIBUTE) != null)) {
 			return (String) request.getAttribute(WebUtils.FORWARD_QUERY_STRING_ATTRIBUTE);
 		}
 		else {

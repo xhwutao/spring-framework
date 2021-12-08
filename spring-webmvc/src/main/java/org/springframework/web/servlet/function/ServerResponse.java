@@ -267,14 +267,14 @@ public interface ServerResponse {
 	 * <p>For example:
 	 * <pre class="code">
 	 * public ServerResponse handleSse(ServerRequest request) {
-	 *     return ServerResponse.sse(sse -> sse.send("Hello World!"));
+	 *     return ServerResponse.sse(sse -&gt; sse.send("Hello World!"));
 	 * }
 	 * </pre>
 	 *
 	 * <p>or, to set both the id and event type:
 	 * <pre class="code">
 	 * public ServerResponse handleSse(ServerRequest request) {
-	 *     return ServerResponse.sse(sse -> sse
+	 *     return ServerResponse.sse(sse -&gt; sse
 	 *         .id("42)
 	 *         .event("event")
 	 *         .send("Hello World!"));
@@ -296,14 +296,14 @@ public interface ServerResponse {
 	 * <p>For example:
 	 * <pre class="code">
 	 * public ServerResponse handleSse(ServerRequest request) {
-	 *     return ServerResponse.sse(sse -> sse.send("Hello World!"));
+	 *     return ServerResponse.sse(sse -&gt; sse.send("Hello World!"));
 	 * }
 	 * </pre>
 	 *
 	 * <p>or, to set both the id and event type:
 	 * <pre class="code">
 	 * public ServerResponse handleSse(ServerRequest request) {
-	 *     return ServerResponse.sse(sse -> sse
+	 *     return ServerResponse.sse(sse -&gt; sse
 	 *         .id("42)
 	 *         .event("event")
 	 *         .send("Hello World!"));
@@ -367,7 +367,6 @@ public interface ServerResponse {
 		/**
 		 * Set the set of allowed {@link HttpMethod HTTP methods}, as specified
 		 * by the {@code Allow} header.
-		 *
 		 * @param allowedMethods the allowed methods
 		 * @return this builder
 		 * @see HttpHeaders#setAllow(Set)
@@ -492,7 +491,6 @@ public interface ServerResponse {
 		/**
 		 * Set the body of the response to the given {@code Object} and return it. The parameter
 		 * {@code bodyType} is used to capture the generic type.
-		 *
 		 * @param body the body of the response
 		 * @param bodyType the type of the body, used to capture the generic type
 		 * @return the built response

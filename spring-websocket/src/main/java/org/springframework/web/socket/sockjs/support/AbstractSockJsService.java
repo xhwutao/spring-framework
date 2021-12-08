@@ -153,7 +153,7 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 	 * However, it can also be set to point to a URL served by the application.
 	 * <p>Note that it's possible to specify a relative URL in which case the URL
 	 * must be relative to the iframe URL. For example assuming a SockJS endpoint
-	 * mapped to "/sockjs", and resulting iframe URL "/sockjs/iframe.html", then the
+	 * mapped to "/sockjs", and resulting iframe URL "/sockjs/iframe.html", then
 	 * the relative URL must start with "../../" to traverse up to the location
 	 * above the SockJS mapping. In case of a prefix-based Servlet mapping one more
 	 * traversal may be needed.
@@ -325,7 +325,6 @@ public abstract class AbstractSockJsService implements SockJsService, CorsConfig
 	 * that do not allow to check request origin (Iframe based transports) are
 	 * disabled. As a consequence, IE 6 to 9 are not supported when origins are
 	 * restricted.
-	 *
 	 * @since 4.1.2
 	 * @see #setAllowedOriginPatterns(Collection)
 	 * @see <a href="https://tools.ietf.org/html/rfc6454">RFC 6454: The Web Origin Concept</a>

@@ -61,7 +61,6 @@ import org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver;
  * <p>This exception resolver is enabled by default in the common Spring
  * {@link org.springframework.web.servlet.DispatcherServlet}.
  *
- * <p>
  * <table>
  * <caption>Supported Exceptions</caption>
  * <thead>
@@ -521,7 +520,7 @@ public class DefaultHandlerExceptionResolver extends AbstractHandlerExceptionRes
 	/**
 	 * Handle the case where an async request timed out.
 	 * <p>The default implementation sends an HTTP 503 error.
-	 * @param ex the {@link AsyncRequestTimeoutException }to be handled
+	 * @param ex the {@link AsyncRequestTimeoutException} to be handled
 	 * @param request current HTTP request
 	 * @param response current HTTP response
 	 * @param handler the executed handler, or {@code null} if none chosen

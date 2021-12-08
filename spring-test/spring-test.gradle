@@ -3,7 +3,7 @@ description = "Spring TestContext Framework"
 apply plugin: "kotlin"
 
 dependencies {
-	compile(project(":spring-core"))
+	api(project(":spring-core"))
 	optional(project(":spring-aop"))
 	optional(project(":spring-beans"))
 	optional(project(":spring-context"))
@@ -30,8 +30,12 @@ dependencies {
 	optional("org.hamcrest:hamcrest")
 	optional("org.apache.taglibs:taglibs-standard-jstlel")
 	optional("net.sourceforge.htmlunit:htmlunit")
-	optional("org.seleniumhq.selenium:htmlunit-driver")
-	optional("org.seleniumhq.selenium:selenium-java")
+	optional("org.seleniumhq.selenium:htmlunit-driver") {
+		exclude group: "net.bytebuddy", module: "byte-buddy"
+	}
+	optional("org.seleniumhq.selenium:selenium-java") {
+		exclude group: "net.bytebuddy", module: "byte-buddy"
+	}
 	optional("org.xmlunit:xmlunit-matchers")
 	optional("org.skyscreamer:jsonassert")
 	optional("com.jayway.jsonpath:json-path")
@@ -41,75 +45,56 @@ dependencies {
 	optional("io.projectreactor:reactor-test")
 	optional("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 	optional("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-	testCompile(project(":spring-context-support"))
-	testCompile(project(":spring-oxm"))
-	testCompile(testFixtures(project(":spring-beans")))
-	testCompile(testFixtures(project(":spring-context")))
-	testCompile(testFixtures(project(":spring-core")))
-	testCompile(testFixtures(project(":spring-tx")))
-	testCompile(testFixtures(project(":spring-web")))
-	testCompile("javax.annotation:javax.annotation-api")
-	testCompile("javax.cache:cache-api")
-	testCompile("javax.ejb:javax.ejb-api")
-	testCompile("javax.interceptor:javax.interceptor-api")
-	testCompile("javax.mail:javax.mail-api")
-	testCompile("org.hibernate:hibernate-core")
-	testCompile("org.hibernate:hibernate-validator")
-	testCompile("javax.validation:validation-api")
-	testCompile("org.junit.platform:junit-platform-runner") {
+	testImplementation(project(":spring-context-support"))
+	testImplementation(project(":spring-oxm"))
+	testImplementation(testFixtures(project(":spring-beans")))
+	testImplementation(testFixtures(project(":spring-context")))
+	testImplementation(testFixtures(project(":spring-core")))
+	testImplementation(testFixtures(project(":spring-tx")))
+	testImplementation(testFixtures(project(":spring-web")))
+	testImplementation("javax.annotation:javax.annotation-api")
+	testImplementation("javax.cache:cache-api")
+	testImplementation("javax.ejb:javax.ejb-api")
+	testImplementation("javax.interceptor:javax.interceptor-api")
+	testImplementation("javax.mail:javax.mail-api")
+	testImplementation("org.hibernate:hibernate-core")
+	testImplementation("org.hibernate:hibernate-validator")
+	testImplementation("javax.validation:validation-api")
+	testImplementation("org.junit.platform:junit-platform-runner") {
 		exclude group: "junit", module: "junit"
 	}
-	testCompile("org.junit.platform:junit-platform-testkit")
-	testCompile("com.fasterxml.jackson.core:jackson-databind")
-	testCompile("com.thoughtworks.xstream:xstream")
-	testCompile("com.rometools:rome")
-	testCompile("org.apache.tiles:tiles-api")
-	testCompile("org.apache.tiles:tiles-core")
-	testCompile("org.apache.tiles:tiles-servlet")
-	testCompile("org.hsqldb:hsqldb")
-	testCompile("org.apache.httpcomponents:httpclient")
-	testCompile("io.projectreactor.netty:reactor-netty-http")
-	testCompile("de.bechte.junit:junit-hierarchicalcontextrunner")
-	testRuntime("org.junit.vintage:junit-vintage-engine") {
+	testImplementation("org.junit.platform:junit-platform-testkit")
+	testImplementation("com.fasterxml.jackson.core:jackson-databind")
+	testImplementation("com.thoughtworks.xstream:xstream")
+	testImplementation("com.rometools:rome")
+	testImplementation("org.apache.tiles:tiles-api")
+	testImplementation("org.apache.tiles:tiles-core")
+	testImplementation("org.apache.tiles:tiles-servlet")
+	testImplementation("org.hsqldb:hsqldb")
+	testImplementation("org.apache.httpcomponents:httpclient")
+	testImplementation("io.projectreactor.netty:reactor-netty-http")
+	testImplementation("de.bechte.junit:junit-hierarchicalcontextrunner")
+	testRuntimeOnly("org.junit.vintage:junit-vintage-engine") {
 		exclude group: "junit", module: "junit"
 	}
-	testRuntime("org.glassfish:javax.el")
-	testRuntime("com.sun.xml.bind:jaxb-core")
-	testRuntime("com.sun.xml.bind:jaxb-impl")
+	testRuntimeOnly("org.junit.support:testng-engine")
+	testRuntimeOnly("org.glassfish:javax.el")
+	testRuntimeOnly("com.sun.xml.bind:jaxb-core")
+	testRuntimeOnly("com.sun.xml.bind:jaxb-impl")
 }
 
-task junit(type: Test) {
-	description = "Runs JUnit 4 and JUnit Jupiter tests."
+test {
+	description = "Runs JUnit 4, JUnit Jupiter, and TestNG tests."
 	useJUnitPlatform {
+		includeEngines "junit-vintage", "junit-jupiter", "testng"
 		excludeTags "failing-test-case"
 	}
+	// We use `include` instead of `filter.includeTestsMatching`, since
+	// the latter results in some tests being executed/reported
+	// multiple times.
 	include(["**/*Tests.class", "**/*Test.class"])
-	exclude(["**/testng/**/*.*"])
+	filter.excludeTestsMatching("*TestCase")
 	systemProperty("testGroups", project.properties.get("testGroups"))
 	// Java Util Logging for the JUnit Platform.
 	// systemProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager")
 }
-
-task testNG(type: Test) {
-	description = "Runs TestNG tests."
-	useTestNG()
-	include(["**/testng/**/*Tests.class", "**/testng/**/*Test.class"])
-	systemProperty("testGroups", project.properties.get("testGroups"))
-	// Show STD_OUT & STD_ERR of the test JVM(s) on the console:
-	// testLogging.showStandardStreams = true
-	// forkEvery 1
-}
-
-test {
-	description = "Runs all tests."
-	dependsOn junit, testNG
-	exclude(["**/*.*"])
-}
-
-task aggregateTestReports(type: TestReport) {
-	description = "Aggregates JUnit and TestNG test reports."
-	destinationDir = test.reports.html.destination
-	reportOn junit, testNG
-}
-
-check.dependsOn aggregateTestReports
