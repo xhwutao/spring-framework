@@ -1,0 +1,11 @@
+description = "Spring study"
+dependencies {
+	api(project(":spring-beans"))
+	api(project(":spring-tx"))
+	api(project(":spring-aop"))
+	api(project(":spring-context"))
+	api(project(":spring-core"))
+	api("org.aspectj:aspectjweaver")
+	optional("org.aspectj:aspectjweaver")
+	testImplementation("org.aspectj:aspectjweaver")
+}
