@@ -1332,6 +1332,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return getBeanFactory().findAnnotationOnBean(beanName, annotationType);
 	}
 
+	@Override
+	@Nullable
+	public <A extends Annotation> A findAnnotationOnBean(
+			String beanName, Class<A> annotationType, boolean allowFactoryBeanInit)
+			throws NoSuchBeanDefinitionException {
+
+		assertBeanFactoryActive();
+		return getBeanFactory().findAnnotationOnBean(beanName, annotationType, allowFactoryBeanInit);
+	}
+
 
 	//---------------------------------------------------------------------
 	// Implementation of HierarchicalBeanFactory interface
