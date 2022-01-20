@@ -36,6 +36,7 @@ include "framework-bom"
 include "integration-tests"
 
 include 'spring-study'
+include 'spring-study-2'
 
 rootProject.name = "spring"
 rootProject.children.each {project ->
@@ -52,7 +53,7 @@ settings.gradle.projectsLoaded {
 				if (buildDir.exists()) {
 					new File(buildDir, "build-scan-uri.txt").text = "${scan.buildScanUri}\n"
 				}
-			}
+            }
 		}
 	}
 }

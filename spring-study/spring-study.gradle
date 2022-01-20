@@ -1,4 +1,4 @@
-description = "Spring study"
+description = "Spring study 拉钩"
 dependencies {
 	api(project(":spring-beans"))
 	api(project(":spring-tx"))
