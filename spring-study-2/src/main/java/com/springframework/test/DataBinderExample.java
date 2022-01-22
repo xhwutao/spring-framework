@@ -1,5 +1,7 @@
-package com.springframework.beans;
+package com.springframework.test;
 
+import com.springframework.beans.OrderValidator;
+import com.springframework.beans.POJOBean;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.validation.DataBinder;
 

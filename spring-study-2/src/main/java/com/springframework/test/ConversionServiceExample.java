@@ -1,4 +1,4 @@
-package com.springframework.beans;
+package com.springframework.test;
 
 import org.springframework.core.convert.support.DefaultConversionService;
 

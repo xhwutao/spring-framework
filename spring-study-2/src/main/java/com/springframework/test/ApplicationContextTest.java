@@ -1,5 +1,6 @@
-package com.springframework.beans;
+package com.springframework.test;
 
+import com.springframework.beans.Employee;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**

@@ -1,5 +1,7 @@
-package com.springframework.beans;
+package com.springframework.test;
 
+import com.springframework.beans.Order;
+import com.springframework.beans.OrderValidator;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.ObjectError;

@@ -1,4 +1,4 @@
-package com.springframework.beans;
+package com.springframework.test;
 
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;

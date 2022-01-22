@@ -1,5 +1,6 @@
-package com.springframework.beans;
+package com.springframework.test;
 
+import com.springframework.beans.HelloBean;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;

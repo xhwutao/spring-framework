@@ -1,5 +1,6 @@
-package com.springframework.beans;
+package com.springframework.test;
 
+import com.springframework.beans.POJOBean;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.MutablePropertyValues;
