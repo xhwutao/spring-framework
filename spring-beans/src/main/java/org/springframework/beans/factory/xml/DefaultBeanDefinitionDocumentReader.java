@@ -152,11 +152,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
-		//解析前处理
+		//解析前处理,留给子类实现
 		preProcessXml(root);
 		//解析
 		parseBeanDefinitions(root, this.delegate);
-		//解析后处理
+		//解析后处理,留给子类实现
 		postProcessXml(root);
 
 		//设置 delegate 回老的 BeanDefinitionParserDelegate 对象
@@ -286,7 +286,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				}
 				//不存在
 				else {
-					//获得根路径地址
+					//获得根路径地址 如果解析不成功，则使用默认的解析器ResourcePatternResolver进行解析
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					//添加配置文件地址的 Resource 到 actualResources 中，并加载相应的 BeanDefinition 们
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
@@ -314,7 +314,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Process the given alias element, registering the alias with the registry.
 	 */
 	protected void processAliasRegistration(Element ele) {
+		//获取beanName
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
+		//获取alias
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
@@ -327,12 +329,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		if (valid) {
 			try {
+				//注册alias
 				getReaderContext().getRegistry().registerAlias(name, alias);
 			}
 			catch (Exception ex) {
 				getReaderContext().error("Failed to register alias '" + alias +
 						"' for bean with name '" + name + "'", ele, ex);
 			}
+			//别名注册后通知监听器做相应处理
 			getReaderContext().fireAliasRegistered(name, alias, extractSource(ele));
 		}
 	}

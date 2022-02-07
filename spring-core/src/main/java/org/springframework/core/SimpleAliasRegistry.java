@@ -82,7 +82,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 								registeredName + "' with new target name '" + name + "'");
 					}
 				}
-				//校验，是否存在循环指向
+				//校验，是否存在循环指向 alias 循环检查。当A->B存在时，若再次出现A->B->C时候则会抛出异常
 				checkForAliasCircle(name, alias);
 				//注册 alias
 				this.aliasMap.put(alias, name);

@@ -110,11 +110,13 @@ class ConstructorResolver {
 		Object[] argsToUse = null;// 构造参数
 
 		// 确定构造参数
-		// 如果 getBean() 已经传递，则直接使用
+		//explicitArgs通过getBean方法传入
+		//如果getBean方法调用的时候指定方法参数name直接使用
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
 		else {
+			//如果在getBean方法时候没有指定则尝试从配置文件中解析
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				// 尝试从缓存中获取
@@ -124,14 +126,15 @@ class ConstructorResolver {
 					// 缓存中的构造参数
 					argsToUse = mbd.resolvedConstructorArguments;
 					if (argsToUse == null) {
+						//配置的构造函数参数
 						argsToResolve = mbd.preparedConstructorArguments;
 					}
 				}
 			}
 			// 缓存中存在,则解析存储在 BeanDefinition 中的参数
-			// 如给定方法的构造函数 A(int ,int )，则通过此方法后就会把配置文件中的("1","1")转换为 (1,1)
-			// 缓存中的值可能是原始值也有可能是最终值
 			if (argsToResolve != null) {
+				// 如给定方法的构造函数 A(int ,int )，则通过此方法后就会把配置文件中的("1","1")转换为 (1,1)
+				// 缓存中的值可能是原始值也有可能是最终值
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve);
 			}
 		}
@@ -180,9 +183,10 @@ class ConstructorResolver {
 			else {
 				// 从 BeanDefinition 中获取构造参数，也就是从配置文件中提取构造参数
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
+				//用于承载解析后的构建函数参数的值
 				resolvedValues = new ConstructorArgumentValues();
-				// 解析构造函数的参数
 				// 将该 bean 的构造函数参数解析为 resolvedValues 对象，其中会涉及到其他 bean
+				//返回 能解析到的参数的个数
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 

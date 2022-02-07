@@ -89,7 +89,7 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 			// Inner bean definition must receive same scope as containing bean.
 			builder.setScope(containingBd.getScope());
 		}
-		//// 设置 lazy-init 属性
+		// 设置 lazy-init 属性
 		if (parserContext.isDefaultLazyInit()) {
 			// Default-lazy-init applies to custom bean definitions as well.
 			builder.setLazyInit(true);

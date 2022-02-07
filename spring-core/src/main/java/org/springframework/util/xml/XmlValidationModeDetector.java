@@ -97,6 +97,7 @@ public class XmlValidationModeDetector {
 			String content;
 			while ((content = reader.readLine()) != null) {
 				content = consumeCommentTokens(content);
+				//如果读取的行是空则略过
 				if (!StringUtils.hasText(content)) {
 					continue;
 				}
@@ -104,6 +105,7 @@ public class XmlValidationModeDetector {
 					isDtdValidated = true;
 					break;
 				}
+				//判断如果这一行包含 < ，并且 < 紧跟着的是字母，则为 XSD 验证模式
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
@@ -138,6 +140,8 @@ public class XmlValidationModeDetector {
 			return false;
 		}
 		int openTagIndex = content.indexOf('<');
+		//< 存在 且 < 后面还有内容
+		//< 后面的内容是字母
 		return (openTagIndex > -1 && (content.length() > openTagIndex + 1) &&
 				Character.isLetter(content.charAt(openTagIndex + 1)));
 	}

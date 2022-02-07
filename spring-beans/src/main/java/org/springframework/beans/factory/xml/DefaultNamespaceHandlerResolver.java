@@ -130,22 +130,23 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 		if (handlerOrClassName == null) {
 			return null;
 		}
-		//已经初始化
 		else if (handlerOrClassName instanceof NamespaceHandler) {
+			//已经做过解析的情况，直接从缓存读取
 			return (NamespaceHandler) handlerOrClassName;
 		}
 		//需要进行初始化
 		else {
+			//没有做过解析，则返回的是类路径
 			String className = (String) handlerOrClassName;
 			try {
-				//获得类，并创建 NamespaceHandler 对象
+				//使用反射将类路径转化为类   获得类，并创建 NamespaceHandler 对象
 				Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);
 				if (!NamespaceHandler.class.isAssignableFrom(handlerClass)) {
 					throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
 							"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
 				}
 				NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
-				//初始化 NamespaceHandler 对象
+				//调用自定义的NamespaceHandler的初始化方法，初始化 NamespaceHandler 对象
 				namespaceHandler.init();
 				//添加到缓存
 				handlerMappings.put(namespaceUri, namespaceHandler);
@@ -177,6 +178,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 						logger.trace("Loading NamespaceHandler mappings from [" + this.handlerMappingsLocation + "]");
 					}
 					try {
+						// this.handlerMappingsLocation 在构造函数中已经被初始化为：META-INF/Spring.handlers
 						// 读取 handlerMappingsLocation
 						Properties mappings =
 								PropertiesLoaderUtils.loadAllProperties(this.handlerMappingsLocation, this.classLoader);

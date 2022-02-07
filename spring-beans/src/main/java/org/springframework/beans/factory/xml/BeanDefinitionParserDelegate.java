@@ -386,6 +386,7 @@ public class BeanDefinitionParserDelegate {
 		String id = ele.getAttribute(ID_ATTRIBUTE);
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
+		//分割name属性
 		List<String> aliases = new ArrayList<>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
@@ -414,6 +415,7 @@ public class BeanDefinitionParserDelegate {
 			//beanName ，再次，使用 beanName 生成规则
 			if (!StringUtils.hasText(beanName)) {
 				try {
+					//如果不存在beanName那么根据Spring中提供的命令规则为当前bean生成对应的beanName
 					if (containingBean != null) {
 						//生成唯一的 beanName
 						beanName = BeanDefinitionReaderUtils.generateBeanName(
@@ -500,10 +502,10 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		try {
-			//创建用于承载属性的 AbstractBeanDefinition 实例
+			//创建用于承载属性的 AbstractBeanDefinition类型的GenericBeanDefinition
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
-			//解析默认 bean 的各种属性
+			//硬编码解析默认 bean 的各种属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			//提取 description
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
@@ -657,18 +659,20 @@ public class BeanDefinitionParserDelegate {
 	 * Parse the meta elements underneath the given element, if any.
 	 */
 	public void parseMetaElements(Element ele, BeanMetadataAttributeAccessor attributeAccessor) {
+		//获取当前节点的所有的子元素
 		NodeList nl = ele.getChildNodes();
 		//遍历子节点
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
+			//提取meta
 			if (isCandidateElement(node) && nodeNameEquals(node, META_ELEMENT)) {// 标签名为 meta
 				Element metaElement = (Element) node;
 				String key = metaElement.getAttribute(KEY_ATTRIBUTE);
 				String value = metaElement.getAttribute(VALUE_ATTRIBUTE);
-				//创建 BeanMetadataAttribute 对象
+				//使用key,value BeanMetadataAttribute 对象
 				BeanMetadataAttribute attribute = new BeanMetadataAttribute(key, value);
 				attribute.setSource(extractSource(metaElement));
-				//添加到 BeanMetadataAttributeAccessor 中
+				//记录信息 添加到 BeanMetadataAttributeAccessor 中
 				attributeAccessor.addMetadataAttribute(attribute);
 			}
 		}
@@ -750,7 +754,9 @@ public class BeanDefinitionParserDelegate {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, LOOKUP_METHOD_ELEMENT)) {// 标签名为 lookup-method
 				Element ele = (Element) node;
+				//获取要装饰的方法
 				String methodName = ele.getAttribute(NAME_ATTRIBUTE);
+				//获取配置返回的bean
 				String beanRef = ele.getAttribute(BEAN_ELEMENT);
 				//创建 LookupOverride 对象
 				LookupOverride override = new LookupOverride(methodName, beanRef);
@@ -771,13 +777,16 @@ public class BeanDefinitionParserDelegate {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, REPLACED_METHOD_ELEMENT)) {// 标签名为 replace-method
 				Element replacedMethodEle = (Element) node;
+				//提取要替换的旧的方法
 				String name = replacedMethodEle.getAttribute(NAME_ATTRIBUTE);
+				//提取对应的新的替换方法
 				String callback = replacedMethodEle.getAttribute(REPLACER_ATTRIBUTE);
 				//创建 ReplaceOverride 对象
 				ReplaceOverride replaceOverride = new ReplaceOverride(name, callback);
 				// Look for arg-type match elements.
 				List<Element> argTypeEles = DomUtils.getChildElementsByTagName(replacedMethodEle, ARG_TYPE_ELEMENT);// arg-type 子标签
 				for (Element argTypeEle : argTypeEles) {
+					//记录参数
 					String match = argTypeEle.getAttribute(ARG_TYPE_MATCH_ATTRIBUTE);// arg-type 子标签的 match 属性
 					match = (StringUtils.hasText(match) ? match : DomUtils.getTextValue(argTypeEle));
 					if (StringUtils.hasText(match)) {
@@ -839,6 +848,7 @@ public class BeanDefinitionParserDelegate {
 			}
 		}
 		else {
+			//没有index属性则忽略去属性，自动寻找
 			try {
 				this.parseState.push(new ConstructorArgumentEntry());
 				//解析 ele 对应属性元素
@@ -983,8 +993,8 @@ public class BeanDefinitionParserDelegate {
 					" is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
 
-		//将 ref 属性值，构造为 RuntimeBeanReference 实例对象
 		if (hasRefAttribute) {
+			//将 ref 属性值，构造为 RuntimeBeanReference 实例对象
 			String refName = ele.getAttribute(REF_ATTRIBUTE);
 			if (!StringUtils.hasText(refName)) {
 				error(elementName + " contains empty 'ref' attribute", ele);
@@ -993,14 +1003,14 @@ public class BeanDefinitionParserDelegate {
 			ref.setSource(extractSource(ele));
 			return ref;
 		}
-		//将 value 属性值，构造为 TypedStringValue 实例对象
 		else if (hasValueAttribute) {
+			//将 value 属性值，构造为 TypedStringValue 实例对象
 			TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
 			valueHolder.setSource(extractSource(ele));
 			return valueHolder;
 		}
-		//解析子元素
 		else if (subElement != null) {
+			//解析子元素
 			return parsePropertySubElement(subElement, bd);
 		}
 		else {
