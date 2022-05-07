@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.ListFactoryBean;
 import org.springframework.beans.factory.parsing.BeanDefinitionParsingException;
@@ -70,16 +69,16 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Juergen Hoeller
  * @author Sam Brannen
  */
-public class ConfigurationClassProcessingTests {
+class ConfigurationClassProcessingTests {
 
 	@Test
-	public void customBeanNameIsRespectedWhenConfiguredViaNameAttribute() {
+	void customBeanNameIsRespectedWhenConfiguredViaNameAttribute() {
 		customBeanNameIsRespected(ConfigWithBeanWithCustomName.class,
 				() -> ConfigWithBeanWithCustomName.testBean, "customName");
 	}
 
 	@Test
-	public void customBeanNameIsRespectedWhenConfiguredViaValueAttribute() {
+	void customBeanNameIsRespectedWhenConfiguredViaValueAttribute() {
 		customBeanNameIsRespected(ConfigWithBeanWithCustomNameConfiguredViaValueAttribute.class,
 				() -> ConfigWithBeanWithCustomNameConfiguredViaValueAttribute.testBean, "enigma");
 	}
@@ -98,13 +97,13 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void aliasesAreRespectedWhenConfiguredViaNameAttribute() {
+	void aliasesAreRespectedWhenConfiguredViaNameAttribute() {
 		aliasesAreRespected(ConfigWithBeanWithAliases.class,
 				() -> ConfigWithBeanWithAliases.testBean, "name1");
 	}
 
 	@Test
-	public void aliasesAreRespectedWhenConfiguredViaValueAttribute() {
+	void aliasesAreRespectedWhenConfiguredViaValueAttribute() {
 		aliasesAreRespected(ConfigWithBeanWithAliasesConfiguredViaValueAttribute.class,
 				() -> ConfigWithBeanWithAliasesConfiguredViaValueAttribute.testBean, "enigma");
 	}
@@ -122,7 +121,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test  // SPR-11830
-	public void configWithBeanWithProviderImplementation() {
+	void configWithBeanWithProviderImplementation() {
 		GenericApplicationContext ac = new GenericApplicationContext();
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(ac);
 		ac.registerBeanDefinition("config", new RootBeanDefinition(ConfigWithBeanWithProviderImplementation.class));
@@ -131,7 +130,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test  // SPR-11830
-	public void configWithSetWithProviderImplementation() {
+	void configWithSetWithProviderImplementation() {
 		GenericApplicationContext ac = new GenericApplicationContext();
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(ac);
 		ac.registerBeanDefinition("config", new RootBeanDefinition(ConfigWithSetWithProviderImplementation.class));
@@ -140,20 +139,20 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void testFinalBeanMethod() {
+	void finalBeanMethod() {
 		assertThatExceptionOfType(BeanDefinitionParsingException.class).isThrownBy(() ->
 				initBeanFactory(ConfigWithFinalBean.class));
 	}
 
 	@Test
-	public void simplestPossibleConfig() {
+	void simplestPossibleConfig() {
 		BeanFactory factory = initBeanFactory(SimplestPossibleConfig.class);
 		String stringBean = factory.getBean("stringBean", String.class);
 		assertThat(stringBean).isEqualTo("foo");
 	}
 
 	@Test
-	public void configWithObjectReturnType() {
+	void configWithObjectReturnType() {
 		BeanFactory factory = initBeanFactory(ConfigWithNonSpecificReturnTypes.class);
 		assertThat(factory.getType("stringBean")).isEqualTo(Object.class);
 		assertThat(factory.isTypeMatch("stringBean", String.class)).isFalse();
@@ -162,7 +161,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configWithFactoryBeanReturnType() {
+	void configWithFactoryBeanReturnType() {
 		ListableBeanFactory factory = initBeanFactory(ConfigWithNonSpecificReturnTypes.class);
 		assertThat(factory.getType("factoryBean")).isEqualTo(List.class);
 		assertThat(factory.isTypeMatch("factoryBean", List.class)).isTrue();
@@ -190,7 +189,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithPrototypeScopedBeans() {
+	void configurationWithPrototypeScopedBeans() {
 		BeanFactory factory = initBeanFactory(ConfigWithPrototypeBean.class);
 
 		TestBean foo = factory.getBean("foo", TestBean.class);
@@ -202,7 +201,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithNullReference() {
+	void configurationWithNullReference() {
 		BeanFactory factory = initBeanFactory(ConfigWithNullReference.class);
 
 		TestBean foo = factory.getBean("foo", TestBean.class);
@@ -211,7 +210,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithAdaptivePrototypes() {
+	void configurationWithAdaptivePrototypes() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(ConfigWithPrototypeBean.class, AdaptiveInjectionPoints.class);
 		ctx.refresh();
@@ -227,7 +226,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithAdaptiveResourcePrototypes() {
+	void configurationWithAdaptiveResourcePrototypes() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(ConfigWithPrototypeBean.class, AdaptiveResourceInjectionPoints.class);
 		ctx.refresh();
@@ -243,7 +242,7 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithPostProcessor() {
+	void configurationWithPostProcessor() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(ConfigWithPostProcessor.class);
 		@SuppressWarnings("deprecation")
@@ -267,17 +266,18 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithFunctionalRegistration() {
+	void configurationWithFunctionalRegistration() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(ConfigWithFunctionalRegistration.class);
 		ctx.refresh();
 
 		assertThat(ctx.getBean(TestBean.class).getSpouse()).isSameAs(ctx.getBean("spouse"));
 		assertThat(ctx.getBean(NestedTestBean.class).getCompany()).isEqualTo("functional");
+		ctx.close();
 	}
 
 	@Test
-	public void configurationWithApplicationListener() {
+	void configurationWithApplicationListener() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(ConfigWithApplicationListener.class);
 		ctx.refresh();
@@ -289,27 +289,29 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	@Test
-	public void configurationWithOverloadedBeanMismatch() {
+	void configurationWithOverloadedBeanMismatch() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.registerBeanDefinition("config", new RootBeanDefinition(OverloadedBeanMismatch.class));
 		ctx.refresh();
 
 		TestBean tb = ctx.getBean(TestBean.class);
 		assertThat(tb.getLawyer()).isEqualTo(ctx.getBean(NestedTestBean.class));
+		ctx.close();
 	}
 
 	@Test
-	public void configurationWithOverloadedBeanMismatchWithAsm() {
+	void configurationWithOverloadedBeanMismatchWithAsm() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.registerBeanDefinition("config", new RootBeanDefinition(OverloadedBeanMismatch.class.getName()));
 		ctx.refresh();
 
 		TestBean tb = ctx.getBean(TestBean.class);
 		assertThat(tb.getLawyer()).isEqualTo(ctx.getBean(NestedTestBean.class));
+		ctx.close();
 	}
 
 	@Test  // gh-26019
-	public void autowiringWithDynamicPrototypeBeanClass() {
+	void autowiringWithDynamicPrototypeBeanClass() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(
 				ConfigWithDynamicPrototype.class, PrototypeDependency.class);
 
@@ -323,6 +325,7 @@ public class ConfigurationClassProcessingTests {
 		PrototypeInterface p3 = ctx.getBean(PrototypeInterface.class, 1);
 		assertThat(p3).isInstanceOf(PrototypeOne.class);
 		assertThat(((PrototypeOne) p3).prototypeDependency).isNotNull();
+		ctx.close();
 	}
 
 
@@ -559,12 +562,9 @@ public class ConfigurationClassProcessingTests {
 
 		// @Bean
 		public BeanFactoryPostProcessor beanFactoryPostProcessor() {
-			return new BeanFactoryPostProcessor() {
-				@Override
-				public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-					BeanDefinition bd = beanFactory.getBeanDefinition("beanPostProcessor");
-					bd.getPropertyValues().addPropertyValue("nameSuffix", "-processed-" + myProp);
-				}
+			return beanFactory -> {
+				BeanDefinition bd = beanFactory.getBeanDefinition("beanPostProcessor");
+				bd.getPropertyValues().addPropertyValue("nameSuffix", "-processed-" + myProp);
 			};
 		}
 
@@ -662,7 +662,6 @@ public class ConfigurationClassProcessingTests {
 	}
 
 	static class PrototypeTwo extends AbstractPrototype {
-
 		// no autowired dependency here, in contrast to above
 	}
 

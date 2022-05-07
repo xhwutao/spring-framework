@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1700,7 +1700,7 @@ class MergedAnnotationsTests {
 		assertThat(componentScan).isNotNull();
 		assertThat(componentScan.value().pattern()).isEqualTo("*Foo");
 		Map<String, Object> map = MergedAnnotation.from(componentScan).asMap(
-				annotation -> new LinkedHashMap<String, Object>(),
+				annotation -> new LinkedHashMap<>(),
 				Adapt.ANNOTATION_TO_MAP);
 		Map<String, Object> filterMap = (Map<String, Object>) map.get("value");
 		assertThat(filterMap.get("pattern")).isEqualTo("*Foo");
@@ -1720,7 +1720,7 @@ class MergedAnnotationsTests {
 				ComponentScan.class);
 		assertThat(componentScan).isNotNull();
 		Map<String, Object> map = MergedAnnotation.from(componentScan).asMap(
-				annotation -> new LinkedHashMap<String, Object>(),
+				annotation -> new LinkedHashMap<>(),
 				Adapt.ANNOTATION_TO_MAP);
 		Map<String, Object>[] filters = (Map[]) map.get("excludeFilters");
 		List<String> patterns = Arrays.stream(filters).map(
@@ -1861,20 +1861,52 @@ class MergedAnnotationsTests {
 		Method methodWithPath = WebController.class.getMethod("handleMappedWithPathAttribute");
 		RequestMapping webMappingWithAliases = methodWithPath.getAnnotation(RequestMapping.class);
 		assertThat(webMappingWithAliases).isNotNull();
+
 		Method methodWithPathAndValue = WebController.class.getMethod("handleMappedWithSamePathAndValueAttributes");
 		RequestMapping webMappingWithPathAndValue = methodWithPathAndValue.getAnnotation(RequestMapping.class);
 		assertThat(methodWithPathAndValue).isNotNull();
+
 		RequestMapping synthesizedWebMapping1 = MergedAnnotation.from(webMappingWithAliases).synthesize();
 		RequestMapping synthesizedWebMapping2 = MergedAnnotation.from(webMappingWithPathAndValue).synthesize();
+
 		assertThat(webMappingWithAliases.toString()).isNotEqualTo(synthesizedWebMapping1.toString());
+
+		// The unsynthesized annotation for handleMappedWithSamePathAndValueAttributes()
+		// should produce almost the same toString() results as synthesized annotations for
+		// handleMappedWithPathAttribute() on Java 9 or higher; however, due to multiple changes
+		// in the JDK's toString() implementation for annotations in JDK 9, 14, and 19,
+		// we do not test the JDK implementation.
+		// assertToStringForWebMappingWithPathAndValue(webMappingWithPathAndValue);
+
 		assertToStringForWebMappingWithPathAndValue(synthesizedWebMapping1);
 		assertToStringForWebMappingWithPathAndValue(synthesizedWebMapping2);
 	}
 
 	private void assertToStringForWebMappingWithPathAndValue(RequestMapping webMapping) {
-		String prefix = "@" + RequestMapping.class.getName() + "(";
-		assertThat(webMapping.toString()).startsWith(prefix).contains("value=[/test]",
-				"path=[/test]", "name=bar", "method=", "[GET, POST]").endsWith(")");
+		assertThat(webMapping.toString())
+			.startsWith("@org.springframework.core.annotation.MergedAnnotationsTests.RequestMapping(")
+			.contains(
+				// Strings
+				"value={\"/test\"}", "path={\"/test\"}", "name=\"bar\"",
+				// Characters
+				"ch='X'", "chars={'X'}",
+				// Enums
+				"method={GET, POST}",
+				// Classes
+				"clazz=org.springframework.core.annotation.MergedAnnotationsTests.RequestMethod.class",
+				"classes={int[][].class, org.springframework.core.annotation.MergedAnnotationsTests.RequestMethod[].class}",
+				// Bytes
+				"byteValue=(byte) 0xFF", "bytes={(byte) 0xFF}",
+				// Shorts
+				"shortValue=9876", "shorts={9876}",
+				// Longs
+				"longValue=42L", "longs={42L}",
+				// Floats
+				"floatValue=3.14f", "floats={3.14f}",
+				// Doubles
+				"doubleValue=99.999d", "doubles={99.999d}"
+			)
+			.endsWith(")");
 	}
 
 	@Test
@@ -2941,7 +2973,17 @@ class MergedAnnotationsTests {
 	}
 
 	enum RequestMethod {
-		GET, POST
+		GET,
+
+		POST;
+
+		/**
+		 * custom override to verify annotation toString() implementations.
+		 */
+		@Override
+		public String toString() {
+			return "method: " + name().toLowerCase();
+		}
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -2956,6 +2998,30 @@ class MergedAnnotationsTests {
 		String[] path() default "";
 
 		RequestMethod[] method() default {};
+
+		// ---------------------------------------------------------------------
+		// All remaining attributes declare default values that are used solely
+		// for the purpose of testing the toString() implementations for annotations.
+		Class<?> clazz() default RequestMethod.class;
+		Class<?>[] classes() default {int[][].class, RequestMethod[].class};
+
+		char ch() default 'X';
+		char[] chars() default {'X'};
+
+		byte byteValue() default (byte) 0xFF;
+		byte[] bytes() default {(byte) 0xFF};
+
+		short shortValue() default 9876;
+		short[] shorts() default {9876};
+
+		long longValue() default 42L;
+		long[] longs() default {42L};
+
+		float floatValue() default 3.14F;
+		float[] floats() default {3.14F};
+
+		double doubleValue() default 99.999D;
+		double[] doubles() default {99.999D};
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

@@ -16,13 +16,13 @@
 
 package org.springframework.scheduling.support;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Year;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 
 import org.assertj.core.api.Condition;
@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import static java.time.DayOfWeek.FRIDAY;
 import static java.time.DayOfWeek.MONDAY;
+import static java.time.DayOfWeek.SATURDAY;
 import static java.time.DayOfWeek.SUNDAY;
 import static java.time.DayOfWeek.THURSDAY;
 import static java.time.DayOfWeek.TUESDAY;
@@ -46,8 +47,8 @@ class CronExpressionTests {
 
 		@Override
 		public boolean matches(Temporal value) {
-			int dayOfWeek = value.get(ChronoField.DAY_OF_WEEK);
-			return dayOfWeek != 6 && dayOfWeek != 7;
+			DayOfWeek dayOfWeek = DayOfWeek.from(value);
+			return dayOfWeek != SATURDAY && dayOfWeek != SUNDAY;
 		}
 	};
 
@@ -958,6 +959,24 @@ class CronExpressionTests {
 		assertThat(actual).isNotNull();
 		assertThat(actual).isEqualTo(expected);
 		assertThat(actual).is(weekday);
+
+		last = LocalDateTime.of(2022, 1, 1, 0, 0);
+		assertThat(last.getDayOfWeek()).isEqualTo(SATURDAY);
+		expected = LocalDateTime.of(2022, 1, 3, 0, 0);
+		assertThat(expected.getDayOfWeek()).isEqualTo(MONDAY);
+		actual = expression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+		assertThat(actual).is(weekday);
+
+		last = LocalDateTime.of(2021, 8, 1, 0,0);
+		assertThat(last.getDayOfWeek()).isEqualTo(SUNDAY);
+		expected = LocalDateTime.of(2021, 8, 2, 0, 0);
+		assertThat(expected.getDayOfWeek()).isEqualTo(MONDAY);
+		actual = expression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+		assertThat(actual).is(weekday);
 	}
 
 	@Test
@@ -1314,6 +1333,22 @@ class CronExpressionTests {
 
 		last = ZonedDateTime.parse("2013-03-31T01:09:00+01:00[Europe/Amsterdam]");
 		expected = ZonedDateTime.parse("2013-04-01T02:10:00+02:00[Europe/Amsterdam]");
+		actual = cronExpression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+
+		cronExpression = CronExpression.parse("0 5 0 * * *");
+
+		last = ZonedDateTime.parse("2021-03-28T01:00:00+01:00[Europe/Amsterdam]");
+		expected = ZonedDateTime.parse("2021-03-29T00:05+02:00[Europe/Amsterdam]");
+		actual = cronExpression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+
+		cronExpression = CronExpression.parse("0 5 0 * * *");
+
+		last = ZonedDateTime.parse("2019-10-27T01:05+02:00[Europe/Amsterdam]");
+		expected = ZonedDateTime.parse("2019-10-28T00:05+01:00[Europe/Amsterdam]");
 		actual = cronExpression.next(last);
 		assertThat(actual).isNotNull();
 		assertThat(actual).isEqualTo(expected);

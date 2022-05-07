@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostP
 import org.springframework.core.SmartClassLoader;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Constructor;
@@ -79,6 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Juergen Hoeller
  * @author Rod Johnson
  * @author Rob Harrop
+ * @author Sam Brannen
  * @since 13.10.2003
  * @see #setInterceptorNames
  * @see #getAdvicesAndAdvisorsForBean
@@ -446,8 +448,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		proxyFactory.copyFrom(this);
 
 		if (proxyFactory.isProxyTargetClass()) {
-			// Explicit handling of JDK proxy targets (for introduction advice scenarios)
-			if (Proxy.isProxyClass(beanClass)) {
+			// Explicit handling of JDK proxy targets and lambdas (for introduction advice scenarios)
+			if (Proxy.isProxyClass(beanClass) || ClassUtils.isLambdaClass(beanClass)) {
 				// Must allow for introductions; can't just set interfaces to the proxy's interfaces only.
 				for (Class<?> ifc : beanClass.getInterfaces()) {
 					proxyFactory.addInterface(ifc);

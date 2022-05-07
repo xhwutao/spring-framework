@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
+ * @author Sam Brannen
  * @see org.springframework.aop.support.AopUtils
  */
 public abstract class AopProxyUtils {
@@ -133,7 +134,7 @@ public abstract class AopProxyUtils {
 				if (targetClass.isInterface()) {
 					advised.setInterfaces(targetClass);
 				}
-				else if (Proxy.isProxyClass(targetClass)) {
+				else if (Proxy.isProxyClass(targetClass) || ClassUtils.isLambdaClass(targetClass)) {
 					advised.setInterfaces(targetClass.getInterfaces());
 				}
 				specifiedInterfaces = advised.getProxiedInterfaces();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -69,7 +70,6 @@ import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.HttpComponentsClientHttpConnector;
 import org.springframework.http.client.reactive.JettyClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.util.SocketUtils;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.testfixture.xml.Pojo;
@@ -90,16 +90,16 @@ class WebClientIntegrationTests {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
-	@ParameterizedTest(name = "[{index}] {displayName} [{0}]")
+	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("arguments")
 	@interface ParameterizedWebClientTest {
 	}
 
-	static Stream<ClientHttpConnector> arguments() {
+	static Stream<Named<ClientHttpConnector>> arguments() {
 		return Stream.of(
-				new ReactorClientHttpConnector(),
-				new JettyClientHttpConnector(),
-				new HttpComponentsClientHttpConnector()
+				Named.named("Reactor Netty", new ReactorClientHttpConnector()),
+				Named.named("Jetty", new JettyClientHttpConnector()),
+				Named.named("HttpComponents", new HttpComponentsClientHttpConnector())
 		);
 	}
 
@@ -1245,7 +1245,8 @@ class WebClientIntegrationTests {
 	private <T> Mono<T> doMalformedChunkedResponseTest(
 			ClientHttpConnector connector, Function<ResponseSpec, Mono<T>> handler) {
 
-		int port = SocketUtils.findAvailableTcpPort();
+		@SuppressWarnings("deprecation")
+		int port = org.springframework.util.SocketUtils.findAvailableTcpPort();
 
 		Thread serverThread = new Thread(() -> {
 			// No way to simulate a malformed chunked response through MockWebServer.

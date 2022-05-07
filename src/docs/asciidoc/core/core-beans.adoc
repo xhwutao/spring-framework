@@ -1788,7 +1788,7 @@ a parent collection definition is redundant and does not result in the desired m
 [[beans-collection-elements-strongly-typed]]
 ===== Strongly-typed collection
 
-With the introduction of generic types in Java 5, you can use strongly typed collections.
+Thanks to Java's support for generic types, you can use strongly typed collections.
 That is, it is possible to declare a `Collection` type such that it can only contain
 (for example) `String` elements. If you use Spring to dependency-inject a
 strongly-typed `Collection` into a bean, you can take advantage of Spring's
@@ -7490,7 +7490,7 @@ exact same way as when you use Spring annotations, as the following example show
 	}
 ----
 
-NOTE: In contrast to `@Component`, the JSR-330 `@Named` and the JSR-250 `ManagedBean`
+NOTE: In contrast to `@Component`, the JSR-330 `@Named` and the JSR-250 `@ManagedBean`
 annotations are not composable. You should use Spring's stereotype model for building
 custom component annotations.
 
@@ -7900,6 +7900,10 @@ init-param):
 	</web-app>
 ----
 
+NOTE: For programmatic use cases, a `GenericWebApplicationContext` can be used as an
+alternative to `AnnotationConfigWebApplicationContext`. See the
+{api-spring-framework}/web/context/support/GenericWebApplicationContext.html[`GenericWebApplicationContext`]
+javadoc for details.
 
 
 [[beans-java-bean-annotation]]

@@ -518,10 +518,10 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	 * @param ann the Autowired annotation
 	 * @return whether the annotation indicates that a dependency is required
 	 */
-	@SuppressWarnings({"deprecation", "cast"})
+	@SuppressWarnings("deprecation")
 	protected boolean determineRequiredStatus(MergedAnnotation<?> ann) {
-		return determineRequiredStatus(
-				(MergedAnnotation<?>) ann.asMap(mergedAnnotation -> new AnnotationAttributes(mergedAnnotation.getType())));
+		return determineRequiredStatus(ann.<AnnotationAttributes> asMap(
+			mergedAnnotation -> new AnnotationAttributes(mergedAnnotation.getType())));
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.springframework.test.context.web.WebTestContextBootstrapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.context.BootstrapUtils.resolveTestContextBootstrapper;
@@ -72,8 +73,8 @@ class BootstrapUtilsTests {
 		assertThatIllegalStateException().isThrownBy(() ->
 				resolveTestContextBootstrapper(bootstrapContext))
 			.withMessageContaining("Configuration error: found multiple declarations of @BootstrapWith")
-			.withMessageContaining(FooBootstrapper.class.getName())
-			.withMessageContaining(BarBootstrapper.class.getName());
+			.withMessageContaining(FooBootstrapper.class.getCanonicalName())
+			.withMessageContaining(BarBootstrapper.class.getCanonicalName());
 	}
 
 	@Test
@@ -104,9 +105,9 @@ class BootstrapUtilsTests {
 	/**
 	 * @since 5.3
 	 */
-	@ParameterizedTest(name = "{0}")
+	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource
-	void resolveTestContextBootstrapperInEnclosingClassHierarchy(String name, Class<?> testClass, Class<?> expectedBootstrapper) {
+	void resolveTestContextBootstrapperInEnclosingClassHierarchy(Class<?> testClass, Class<?> expectedBootstrapper) {
 		assertBootstrapper(testClass, expectedBootstrapper);
 	}
 
@@ -129,7 +130,7 @@ class BootstrapUtilsTests {
 	}
 
 	private static Arguments args(Class<?> testClass, Class<? extends TestContextBootstrapper> expectedBootstrapper) {
-		return arguments(testClass.getSimpleName(), testClass, expectedBootstrapper);
+		return arguments(named(testClass.getSimpleName(), testClass), expectedBootstrapper);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 [[mvc]]
 = Spring Web MVC
-:doc-spring-security: {doc-root}/spring-security/site/docs/current/reference
+:doc-spring-security: {doc-root}/spring-security/reference
 
 Spring Web MVC is the original web framework built on the Servlet API and has been included
 in the Spring Framework from the very beginning. The formal name, "`Spring Web MVC,`"
@@ -83,6 +83,11 @@ the `DispatcherServlet`, which is auto-detected by the Servlet container
 NOTE: In addition to using the ServletContext API directly, you can also extend
 `AbstractAnnotationConfigDispatcherServletInitializer` and override specific methods
 (see the example under <<mvc-servlet-context-hierarchy>>).
+
+NOTE: For programmatic use cases, a `GenericWebApplicationContext` can be used as an
+alternative to `AnnotationConfigWebApplicationContext`. See the
+{api-spring-framework}/web/context/support/GenericWebApplicationContext.html[`GenericWebApplicationContext`]
+javadoc for details.
 
 The following example of `web.xml` configuration registers and initializes the `DispatcherServlet`:
 
@@ -3746,6 +3751,13 @@ controller-specific `Formatter` implementations, as the following example shows:
 ----
 <1> Defining an `@InitBinder` method on a custom formatter.
 
+[[mvc-ann-initbinder-model-design]]
+==== Model Design
+[.small]#<<web-reactive.adoc#webflux-ann-initbinder-model-design, WebFlux>>#
+
+include::web-data-binding-model-design.adoc[]
+
+
 [[mvc-ann-exceptionhandler]]
 === Exceptions
 [.small]#<<web-reactive.adoc#webflux-ann-controller-exceptions, WebFlux>>#
@@ -4102,24 +4114,22 @@ as the following example shows:
 ----
 	HttpServletRequest request = ...
 
-	// Re-uses host, scheme, port, path and query string...
+	// Re-uses scheme, host, port, path, and query string...
 
-	ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromRequest(request)
-			.replaceQueryParam("accountId", "{id}").build()
-			.expand("123")
-			.encode();
+	URI uri = ServletUriComponentsBuilder.fromRequest(request)
+			.replaceQueryParam("accountId", "{id}")
+			.build("123");
 ----
 [source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
 .Kotlin
 ----
 	val request: HttpServletRequest = ...
 
-	// Re-uses host, scheme, port, path and query string...
+	// Re-uses scheme, host, port, path, and query string...
 
-	val ucb = ServletUriComponentsBuilder.fromRequest(request)
-			.replaceQueryParam("accountId", "{id}").build()
-			.expand("123")
-			.encode()
+	val uri = ServletUriComponentsBuilder.fromRequest(request)
+			.replaceQueryParam("accountId", "{id}")
+			.build("123")
 ----
 
 You can create URIs relative to the context path, as the following example shows:
@@ -4127,18 +4137,26 @@ You can create URIs relative to the context path, as the following example shows
 [source,java,indent=0,subs="verbatim,quotes",role="primary"]
 .Java
 ----
-	// Re-uses host, port and context path...
+	HttpServletRequest request = ...
 
-	ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromContextPath(request)
-			.path("/accounts").build()
+	// Re-uses scheme, host, port, and context path...
+
+	URI uri = ServletUriComponentsBuilder.fromContextPath(request)
+			.path("/accounts")
+			.build()
+			.toUri();
 ----
 [source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
 .Kotlin
 ----
-	// Re-uses host, port and context path...
+	val request: HttpServletRequest = ...
 
-	val ucb = ServletUriComponentsBuilder.fromContextPath(request)
-			.path("/accounts").build()
+	// Re-uses scheme, host, port, and context path...
+
+	val uri = ServletUriComponentsBuilder.fromContextPath(request)
+			.path("/accounts")
+			.build()
+			.toUri()
 ----
 
 You can create URIs relative to a Servlet (for example, `/main/{asterisk}`),
@@ -4147,18 +4165,26 @@ as the following example shows:
 [source,java,indent=0,subs="verbatim,quotes",role="primary"]
 .Java
 ----
-	// Re-uses host, port, context path, and Servlet prefix...
+	HttpServletRequest request = ...
 
-	ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromServletMapping(request)
-			.path("/accounts").build()
+	// Re-uses scheme, host, port, context path, and Servlet mapping prefix...
+
+	URI uri = ServletUriComponentsBuilder.fromServletMapping(request)
+			.path("/accounts")
+			.build()
+			.toUri();
 ----
 [source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
 .Kotlin
 ----
-	// Re-uses host, port, context path, and Servlet prefix...
+	val request: HttpServletRequest = ...
 
-	val ucb = ServletUriComponentsBuilder.fromServletMapping(request)
-			.path("/accounts").build()
+	// Re-uses scheme, host, port, context path, and Servlet mapping prefix...
+
+	val uri = ServletUriComponentsBuilder.fromServletMapping(request)
+			.path("/accounts")
+			.build()
+			.toUri()
 ----
 
 NOTE: As of 5.1, `ServletUriComponentsBuilder` ignores information from the `Forwarded` and
@@ -4810,14 +4836,14 @@ include::webmvc-cors.adoc[leveloffset=+1]
 == Web Security
 [.small]#<<web-reactive.adoc#webflux-web-security, WebFlux>>#
 
-The https://projects.spring.io/spring-security/[Spring Security] project provides support
+The https://spring.io/projects/spring-security[Spring Security] project provides support
 for protecting web applications from malicious exploits. See the Spring Security
 reference documentation, including:
 
-* {doc-spring-security}/html5/#mvc[Spring MVC Security]
-* {doc-spring-security}/html5/#test-mockmvc[Spring MVC Test Support]
-* {doc-spring-security}/html5/#csrf[CSRF protection]
-* {doc-spring-security}/html5/#headers[Security Response Headers]
+* {doc-spring-security}/servlet/integrations/mvc.html[Spring MVC Security]
+* {doc-spring-security}/servlet/test/mockmvc/setup.html[Spring MVC Test Support]
+* {doc-spring-security}/features/exploits/csrf.html#csrf-protection[CSRF protection]
+* {doc-spring-security}/features/exploits/headers.html[Security Response Headers]
 
 https://hdiv.org/[HDIV] is another web security framework that integrates with Spring MVC.
 
