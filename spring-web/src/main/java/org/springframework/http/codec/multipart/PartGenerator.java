@@ -55,7 +55,7 @@ import org.springframework.util.FastByteArrayOutputStream;
 
 /**
  * Subscribes to a token stream (i.e. the result of
- * {@link MultipartParser#parse(Flux, byte[], int, Charset)}, and produces a flux of {@link Part} objects.
+ * {@link MultipartParser#parse(Flux, byte[], int, Charset)}), and produces a flux of {@link Part} objects.
  *
  * @author Arjen Poutsma
  * @since 5.3
@@ -256,7 +256,7 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 	 * creating a single {@link Part}.
 	 * {@link State} instances are stateful, and created when a new
 	 * {@link MultipartParser.HeadersToken} is accepted (see
-	 * {@link #newPart(State, HttpHeaders)}.
+	 * {@link #newPart(State, HttpHeaders)}).
 	 * The following rules determine which state the creator will have:
 	 * <ol>
 	 * <li>If the part is a {@linkplain #isFormField(HttpHeaders) form field},
@@ -609,6 +609,7 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 			}
 			else {
 				MultipartUtils.closeChannel(newState.channel);
+				MultipartUtils.deleteFile(newState.file);
 				this.content.forEach(DataBufferUtils::release);
 			}
 		}
@@ -640,6 +641,8 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 
 		private volatile boolean closeOnDispose = true;
 
+		private volatile boolean deleteOnDispose = true;
+
 
 		public IdleFileState(WritingFileState state) {
 			this.headers = state.headers;
@@ -654,16 +657,20 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 			if (PartGenerator.this.maxDiskUsagePerPart == -1 || count <= PartGenerator.this.maxDiskUsagePerPart) {
 
 				this.closeOnDispose = false;
+				this.deleteOnDispose = false;
 				WritingFileState newState = new WritingFileState(this);
 				if (changeState(this, newState)) {
 					newState.writeBuffer(dataBuffer);
 				}
 				else {
 					MultipartUtils.closeChannel(this.channel);
+					MultipartUtils.deleteFile(this.file);
 					DataBufferUtils.release(dataBuffer);
 				}
 			}
 			else {
+				MultipartUtils.closeChannel(this.channel);
+				MultipartUtils.deleteFile(this.file);
 				DataBufferUtils.release(dataBuffer);
 				emitError(new DataBufferLimitException(
 						"Part exceeded the disk usage limit of " + PartGenerator.this.maxDiskUsagePerPart +
@@ -674,6 +681,7 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 		@Override
 		public void partComplete(boolean finalPart) {
 			MultipartUtils.closeChannel(this.channel);
+			this.deleteOnDispose = false;
 			emitPart(DefaultParts.part(this.headers, this.file, PartGenerator.this.blockingOperationScheduler));
 			if (finalPart) {
 				emitComplete();
@@ -684,6 +692,9 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 		public void dispose() {
 			if (this.closeOnDispose) {
 				MultipartUtils.closeChannel(this.channel);
+			}
+			if (this.deleteOnDispose) {
+				MultipartUtils.deleteFile(this.file);
 			}
 		}
 
@@ -709,6 +720,8 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 		private volatile boolean completed;
 
 		private volatile boolean finalPart;
+
+		private volatile boolean disposed;
 
 
 		public WritingFileState(CreateFileState state, Path file, WritableByteChannel channel) {
@@ -761,11 +774,15 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 			if (this.completed) {
 				newState.partComplete(this.finalPart);
 			}
+			else if (this.disposed) {
+				newState.dispose();
+			}
 			else if (changeState(this, newState)) {
 				requestToken();
 			}
 			else {
 				MultipartUtils.closeChannel(this.channel);
+				MultipartUtils.deleteFile(this.file);
 			}
 		}
 
@@ -779,12 +796,20 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 				return Mono.empty();
 			}
 			catch (IOException ex) {
+				MultipartUtils.closeChannel(this.channel);
+				MultipartUtils.deleteFile(this.file);
 				return Mono.error(ex);
 			}
 			finally {
 				DataBufferUtils.release(dataBuffer);
 			}
 		}
+
+		@Override
+		public void dispose() {
+			this.disposed = true;
+		}
+
 
 		@Override
 		public String toString() {

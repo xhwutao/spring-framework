@@ -29,7 +29,7 @@ configure(allprojects) { project ->
 		imports {
 			mavenBom "com.fasterxml.jackson:jackson-bom:2.12.7"
 			mavenBom "io.netty:netty-bom:4.1.77.Final"
-			mavenBom "io.projectreactor:reactor-bom:2020.0.20"
+			mavenBom "io.projectreactor:reactor-bom:2020.0.21"
 			mavenBom "io.r2dbc:r2dbc-bom:Arabba-SR13"
 			mavenBom "io.rsocket:rsocket-bom:1.1.2"
 			mavenBom "org.eclipse.jetty:jetty-bom:9.4.46.v20220331"
@@ -188,7 +188,7 @@ configure(allprojects) { project ->
 				exclude group: "junit", name: "junit"
 			}
 			dependency "org.testng:testng:7.4.0"
-			dependency "org.junit.support:testng-engine:1.0.1"
+			dependency "org.junit.support:testng-engine:1.0.4"
 			dependency "org.hamcrest:hamcrest:2.2"
 			dependency "org.awaitility:awaitility:3.1.6"
 			dependency "org.assertj:assertj-core:3.23.0"
@@ -380,7 +380,8 @@ configure([rootProject] + javaProjects) { project ->
 			"https://fasterxml.github.io/jackson-core/javadoc/2.10/",
 			"https://fasterxml.github.io/jackson-databind/javadoc/2.10/",
 			"https://fasterxml.github.io/jackson-dataformat-xml/javadoc/2.10/",
-			"https://hc.apache.org/httpcomponents-client-5.1.x/current/httpclient5/apidocs/",
+			// TODO Uncomment once httpclient5 API docs are again online.
+			// "https://hc.apache.org/httpcomponents-client-5.1.x/current/httpclient5/apidocs/",
 			"https://projectreactor.io/docs/test/release/api/",
 			"https://junit.org/junit4/javadoc/4.13.2/",
 			// Disabling linking to JUnit 5.8.2, since the `package-list` file no longer exists due to
