@@ -229,6 +229,7 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 		if (upstream() != null &&
 				!this.sink.isCancelled() &&
 				this.sink.requestedFromDownstream() > 0 &&
+				this.state.get().canRequest() &&
 				this.requestOutstanding.compareAndSet(false, true)) {
 			request(1);
 		}
@@ -289,6 +290,13 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 		 * Invoked when an error has been received.
 		 */
 		default void error(Throwable throwable) {
+		}
+
+		/**
+		 * Indicates whether the current state is ready to accept a new token.
+		 */
+		default boolean canRequest() {
+			return true;
 		}
 
 		/**
@@ -746,8 +754,15 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 
 		@Override
 		public void partComplete(boolean finalPart) {
-			this.completed = true;
-			this.finalPart = finalPart;
+			State state = PartGenerator.this.state.get();
+			// writeComplete might have changed our state to IdleFileState
+			if (state != this) {
+				state.partComplete(finalPart);
+			}
+			else {
+				this.completed = true;
+				this.finalPart = finalPart;
+			}
 		}
 
 		public void writeBuffer(DataBuffer dataBuffer) {
@@ -771,14 +786,16 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 
 		private void writeComplete() {
 			IdleFileState newState = new IdleFileState(this);
-			if (this.completed) {
-				newState.partComplete(this.finalPart);
-			}
-			else if (this.disposed) {
+			if (this.disposed) {
 				newState.dispose();
 			}
 			else if (changeState(this, newState)) {
-				requestToken();
+				if (this.completed) {
+					newState.partComplete(this.finalPart);
+				}
+				else {
+					requestToken();
+				}
 			}
 			else {
 				MultipartUtils.closeChannel(this.channel);
@@ -803,6 +820,11 @@ final class PartGenerator extends BaseSubscriber<MultipartParser.Token> {
 			finally {
 				DataBufferUtils.release(dataBuffer);
 			}
+		}
+
+		@Override
+		public boolean canRequest() {
+			return false;
 		}
 
 		@Override

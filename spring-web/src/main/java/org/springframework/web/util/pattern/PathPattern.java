@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class PathPattern implements Comparable<PathPattern> {
 		// Find first path element that is not a separator or a literal (i.e. the first pattern based element)
 		PathElement elem = this.head;
 		while (elem != null) {
-			if (elem.getWildcardCount() != 0 || elem.getCaptureCount() != 0) {
+			if (!elem.isLiteral()) {
 				break;
 			}
 			elem = elem.next;

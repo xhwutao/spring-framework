@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,7 @@ class SpelReproTests extends AbstractExpressionTests {
 		checkTemplateParsingError("abc${ } }", "No expression defined within delimiter '${}' at character 3");
 		checkTemplateParsingError("abc$[ } ]", DOLLARSQUARE_TEMPLATE_PARSER_CONTEXT, "Found closing '}' at position 6 without an opening '{'");
 
-		checkTemplateParsing("abc ${\"def''g}hi\"} jkl", "abc def'g}hi jkl");
+		checkTemplateParsing("abc ${\"def''g}hi\"} jkl", "abc def''g}hi jkl");
 		checkTemplateParsing("abc ${'def''g}hi'} jkl", "abc def'g}hi jkl");
 		checkTemplateParsing("}", "}");
 		checkTemplateParsing("${'hello'} world", "hello world");
@@ -602,7 +602,7 @@ class SpelReproTests extends AbstractExpressionTests {
 	/**
 	 * Test whether {@link ReflectiveMethodResolver} follows Java Method Invocation
 	 * Conversion order. And more precisely that widening reference conversion is 'higher'
-	 * than a unboxing conversion.
+	 * than an unboxing conversion.
 	 */
 	@Test
 	void conversionPriority_SPR8224() throws Exception {
@@ -1817,7 +1817,6 @@ class SpelReproTests extends AbstractExpressionTests {
 	static class CCC {
 
 		public boolean method(Object o) {
-			System.out.println(o);
 			return false;
 		}
 	}
@@ -1889,7 +1888,6 @@ class SpelReproTests extends AbstractExpressionTests {
 	static class Foo2 {
 
 		public void execute(String str) {
-			System.out.println("Value: " + str);
 		}
 	}
 
@@ -1964,7 +1962,6 @@ class SpelReproTests extends AbstractExpressionTests {
 	public static class ReflectionUtil<T extends Number> {
 
 		public Object methodToCall(T param) {
-			System.out.println(param + " " + param.getClass());
 			return "Object methodToCall(T param)";
 		}
 
