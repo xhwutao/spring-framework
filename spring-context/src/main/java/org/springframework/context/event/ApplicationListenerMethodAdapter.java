@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,7 +274,7 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 					handleAsyncError(ex);
 				}
 				else if (event != null) {
-					publishEvent(event);
+					publishEvents(event);
 				}
 			});
 		}
@@ -367,7 +367,7 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	 * Return the target bean instance to use.
 	 */
 	protected Object getTargetBean() {
-		Assert.notNull(this.applicationContext, "ApplicationContext must no be null");
+		Assert.notNull(this.applicationContext, "ApplicationContext must not be null");
 		return this.applicationContext.getBean(this.beanName);
 	}
 
@@ -468,6 +468,9 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	}
 
 
+	/**
+	 * Inner class to avoid a hard dependency on the Reactive Streams API at runtime.
+	 */
 	private class ReactiveResultHandler {
 
 		public boolean subscribeToPublisher(Object result) {
@@ -481,6 +484,9 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	}
 
 
+	/**
+	 * Reactive Streams Subscriber for publishing follow-up events.
+	 */
 	private class EventPublicationSubscriber implements Subscriber<Object> {
 
 		@Override

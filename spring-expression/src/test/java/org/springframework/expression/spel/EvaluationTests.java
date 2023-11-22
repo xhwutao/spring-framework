@@ -25,6 +25,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import org.springframework.expression.AccessException;
 import org.springframework.expression.BeanResolver;
@@ -36,6 +38,7 @@ import org.springframework.expression.MethodFilter;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeLocator;
 import org.springframework.expression.spel.testresources.TestPerson;
@@ -59,6 +62,40 @@ class EvaluationTests extends AbstractExpressionTests {
 
 	@Nested
 	class MiscellaneousTests {
+
+		@Test
+		void expressionLength() {
+			String expression = String.format("'X' + '%s'", repeat(" ", 9_992));
+			assertThat(expression).hasSize(10_000);
+			Expression expr = parser.parseExpression(expression);
+			String result = expr.getValue(context, String.class);
+			assertThat(result).hasSize(9_993);
+			assertThat(result.trim()).isEqualTo("X");
+
+			expression = String.format("'X' + '%s'", repeat(" ", 9_993));
+			assertThat(expression).hasSize(10_001);
+			evaluateAndCheckError(expression, String.class, SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED);
+		}
+
+		@Test
+		void maxExpressionLengthIsConfigurable() {
+			int maximumExpressionLength = 20_000;
+
+			String expression = String.format("'%s'", repeat("Y", 19_998));
+			assertThat(expression).hasSize(maximumExpressionLength);
+
+			SpelParserConfiguration configuration =
+					new SpelParserConfiguration(null, null, false, false, 0, maximumExpressionLength);
+			ExpressionParser parser = new SpelExpressionParser(configuration);
+
+			Expression expr = parser.parseExpression(expression);
+			String result = expr.getValue(String.class);
+			assertThat(result).hasSize(19_998);
+
+			expression = String.format("'%s'", repeat("Y", 25_000));
+			assertThat(expression).hasSize(25_002);
+			evaluateAndCheckError(parser, expression, String.class, SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED);
+		}
 
 		@Test
 		void createListsOnAttemptToIndexNull01() throws EvaluationException, ParseException {
@@ -135,8 +172,24 @@ class EvaluationTests extends AbstractExpressionTests {
 
 		// assignment
 		@Test
-		void assignmentToVariables() {
-			evaluate("#var1='value1'", "value1", String.class);
+		void assignmentToVariableWithStandardEvaluationContext() {
+			evaluate("#var1 = 'value1'", "value1", String.class);
+		}
+
+		@ParameterizedTest
+		@CsvSource(delimiterString = "->", value = {
+			"'#var1 = \"value1\"'    -> #var1",
+			"'true ? #myVar = 4 : 0' -> #myVar"
+		})
+		void assignmentToVariableWithSimpleEvaluationContext(String expression, String varName) {
+			EvaluationContext context = SimpleEvaluationContext.forReadWriteDataBinding().build();
+			Expression expr = parser.parseExpression(expression);
+			assertThatExceptionOfType(SpelEvaluationException.class)
+				.isThrownBy(() -> expr.getValue(context))
+				.satisfies(ex -> {
+					assertThat(ex.getMessageCode()).isEqualTo(SpelMessage.VARIABLE_ASSIGNMENT_NOT_SUPPORTED);
+					assertThat(ex.getInserts()).as("inserts").containsExactly(varName);
+				});
 		}
 
 		@Test
@@ -482,15 +535,13 @@ class EvaluationTests extends AbstractExpressionTests {
 
 		@Test
 		void matchesWithPatternLengthThreshold() {
-			String pattern = "(0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" +
-					"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" +
-					"01234567890123456789012345678901234567890123456789|abc)";
-			assertThat(pattern).hasSize(256);
-			Expression expr = parser.parseExpression("'abc' matches '" + pattern + "'");
+			String pattern = String.format("^(%s|X)", repeat("12345", 199));
+			assertThat(pattern).hasSize(1000);
+			Expression expr = parser.parseExpression("'X' matches '" + pattern + "'");
 			assertThat(expr.getValue(context, Boolean.class)).isTrue();
 
 			pattern += "?";
-			assertThat(pattern).hasSize(257);
+			assertThat(pattern).hasSize(1001);
 			evaluateAndCheckError("'abc' matches '" + pattern + "'", Boolean.class, SpelMessage.MAX_REGEX_LENGTH_EXCEEDED);
 		}
 
@@ -1465,6 +1516,15 @@ class EvaluationTests extends AbstractExpressionTests {
 			}).satisfies(ex -> assertThat(ex.getMessageCode()).isEqualTo(messageCode));
 		}
 
+	}
+
+
+	private static String repeat(String str, int count) {
+		String result = "";
+		for (int i = 0; i < count; i++) {
+			result += str;
+		}
+		return result;
 	}
 
 

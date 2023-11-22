@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import kotlinx.coroutines.CompletableDeferredKt;
-import kotlinx.coroutines.Deferred;
 import org.reactivestreams.Publisher;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
@@ -39,13 +37,14 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ReflectionUtils;
 
 /**
- * A registry of adapters to adapt Reactive Streams {@link Publisher} to/from
- * various async/reactive types such as {@code CompletableFuture}, RxJava
- * {@code Flowable}, and others.
+ * A registry of adapters to adapt Reactive Streams {@link Publisher} to/from various
+ * async/reactive types such as {@code CompletableFuture}, RxJava {@code Flowable}, etc.
+ * This is designed to complement Spring's Reactor {@code Mono}/{@code Flux} support while
+ * also being usable without Reactor, e.g. just for {@code org.reactivestreams} bridging.
  *
- * <p>By default, depending on classpath availability, adapters are registered
- * for Reactor, RxJava 3, {@link CompletableFuture}, {@code Flow.Publisher},
- * and Kotlin Coroutines' {@code Deferred} and {@code Flow}.
+ * <p>By default, depending on classpath availability, adapters are registered for Reactor
+ * (including {@code CompletableFuture} and {@code Flow.Publisher} adapters), RxJava 3,
+ * Kotlin Coroutines' {@code Deferred} (bridged via Reactor) and SmallRye Mutiny 1.x.
  *
  * <p><strong>Note:</strong> As of Spring Framework 5.3.11, support for
  * RxJava 1.x and 2.x is deprecated in favor of RxJava 3.
@@ -136,16 +135,45 @@ public class ReactiveAdapterRegistry {
 	 * Register a reactive type along with functions to adapt to and from a
 	 * Reactive Streams {@link Publisher}. The function arguments assume that
 	 * their input is neither {@code null} nor {@link Optional}.
+	 * <p>This variant registers the new adapter after existing adapters.
+	 * It will be matched for the exact reactive type if no earlier adapter was
+	 * registered for the specific type, and it will be matched for assignability
+	 * in a second pass if no earlier adapter had an assignable type before.
+	 * @see #registerReactiveTypeOverride
+	 * @see #getAdapter
 	 */
 	public void registerReactiveType(ReactiveTypeDescriptor descriptor,
 			Function<Object, Publisher<?>> toAdapter, Function<Publisher<?>, Object> fromAdapter) {
 
-		if (reactorPresent) {
-			this.adapters.add(new ReactorAdapter(descriptor, toAdapter, fromAdapter));
-		}
-		else {
-			this.adapters.add(new ReactiveAdapter(descriptor, toAdapter, fromAdapter));
-		}
+		this.adapters.add(buildAdapter(descriptor, toAdapter, fromAdapter));
+	}
+
+	/**
+	 * Register a reactive type along with functions to adapt to and from a
+	 * Reactive Streams {@link Publisher}. The function arguments assume that
+	 * their input is neither {@code null} nor {@link Optional}.
+	 * <p>This variant registers the new adapter first, effectively overriding
+	 * any previously registered adapters for the same reactive type. This allows
+	 * for overriding existing adapters, in particular default adapters.
+	 * <p>Note that existing adapters for specific types will still match before
+	 * an assignability match with the new adapter. In order to override all
+	 * existing matches, a new reactive type adapter needs to be registered
+	 * for every specific type, not relying on subtype assignability matches.
+	 * @since 5.3.30
+	 * @see #registerReactiveType
+	 * @see #getAdapter
+	 */
+	public void registerReactiveTypeOverride(ReactiveTypeDescriptor descriptor,
+			Function<Object, Publisher<?>> toAdapter, Function<Publisher<?>, Object> fromAdapter) {
+
+		this.adapters.add(0, buildAdapter(descriptor, toAdapter, fromAdapter));
+	}
+
+	private ReactiveAdapter buildAdapter(ReactiveTypeDescriptor descriptor,
+			Function<Object, Publisher<?>> toAdapter, Function<Publisher<?>, Object> fromAdapter) {
+
+		return (reactorPresent ? new ReactorAdapter(descriptor, toAdapter, fromAdapter) :
+				new ReactiveAdapter(descriptor, toAdapter, fromAdapter));
 	}
 
 	/**
@@ -401,9 +429,9 @@ public class ReactiveAdapterRegistry {
 		@SuppressWarnings("KotlinInternalInJava")
 		void registerAdapters(ReactiveAdapterRegistry registry) {
 			registry.registerReactiveType(
-					ReactiveTypeDescriptor.singleOptionalValue(Deferred.class,
-							() -> CompletableDeferredKt.CompletableDeferred(null)),
-					source -> CoroutinesUtils.deferredToMono((Deferred<?>) source),
+					ReactiveTypeDescriptor.singleOptionalValue(kotlinx.coroutines.Deferred.class,
+							() -> kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred(null)),
+					source -> CoroutinesUtils.deferredToMono((kotlinx.coroutines.Deferred<?>) source),
 					source -> CoroutinesUtils.monoToDeferred(Mono.from(source)));
 
 			registry.registerReactiveType(

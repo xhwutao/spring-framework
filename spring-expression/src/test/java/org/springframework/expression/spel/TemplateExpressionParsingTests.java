@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,16 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * @author Andy Clement
  * @author Juergen Hoeller
+ * @author Sam Brannen
  */
-public class TemplateExpressionParsingTests extends AbstractExpressionTests {
+class TemplateExpressionParsingTests extends AbstractExpressionTests {
 
-	public static final ParserContext DEFAULT_TEMPLATE_PARSER_CONTEXT = new ParserContext() {
+	static final ParserContext DEFAULT_TEMPLATE_PARSER_CONTEXT = new ParserContext() {
 		@Override
 		public String getExpressionPrefix() {
 			return "${";
@@ -52,7 +54,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 		}
 	};
 
-	public static final ParserContext HASH_DELIMITED_PARSER_CONTEXT = new ParserContext() {
+	static final ParserContext HASH_DELIMITED_PARSER_CONTEXT = new ParserContext() {
 		@Override
 		public String getExpressionPrefix() {
 			return "#{";
@@ -68,25 +70,32 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	};
 
 
+	private final SpelExpressionParser parser = new SpelExpressionParser();
+
+
 	@Test
-	public void testParsingSimpleTemplateExpression01() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void nullTemplateExpressionIsRejected() {
+		assertThatIllegalArgumentException()
+			.isThrownBy(() -> parser.parseExpression(null, DEFAULT_TEMPLATE_PARSER_CONTEXT))
+			.withMessage("'expressionString' must not be null");
+	}
+
+	@Test
+	void parsingSimpleTemplateExpression01() {
 		Expression expr = parser.parseExpression("hello ${'world'}", DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		Object o = expr.getValue();
 		assertThat(o.toString()).isEqualTo("hello world");
 	}
 
 	@Test
-	public void testParsingSimpleTemplateExpression02() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void parsingSimpleTemplateExpression02() {
 		Expression expr = parser.parseExpression("hello ${'to'} you", DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		Object o = expr.getValue();
 		assertThat(o.toString()).isEqualTo("hello to you");
 	}
 
 	@Test
-	public void testParsingSimpleTemplateExpression03() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void parsingSimpleTemplateExpression03() {
 		Expression expr = parser.parseExpression("The quick ${'brown'} fox jumped over the ${'lazy'} dog",
 				DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		Object o = expr.getValue();
@@ -94,8 +103,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	}
 
 	@Test
-	public void testParsingSimpleTemplateExpression04() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void parsingSimpleTemplateExpression04() {
 		Expression expr = parser.parseExpression("${'hello'} world", DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		Object o = expr.getValue();
 		assertThat(o.toString()).isEqualTo("hello world");
@@ -114,8 +122,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	}
 
 	@Test
-	public void testCompositeStringExpression() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void compositeStringExpression() {
 		Expression ex = parser.parseExpression("hello ${'world'}", DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		assertThat(ex.getValue()).isInstanceOf(String.class).isEqualTo("hello world");
 		assertThat(ex.getValue(String.class)).isInstanceOf(String.class).isEqualTo("hello world");
@@ -154,8 +161,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	static class Rooty {}
 
 	@Test
-	public void testNestedExpressions() throws Exception {
-		SpelExpressionParser parser = new SpelExpressionParser();
+	void nestedExpressions() {
 		// treat the nested ${..} as a part of the expression
 		Expression ex = parser.parseExpression("hello ${listOfNumbersUpToTen.$[#this<5]} world",DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		String s = ex.getValue(TestScenarioCreator.getTestEvaluationContext(),String.class);
@@ -185,8 +191,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	}
 
 	@Test
-
-	public void testClashingWithSuffixes() throws Exception {
+	void clashingWithSuffixes() {
 		// Just wanting to use the prefix or suffix within the template:
 		Expression ex = parser.parseExpression("hello ${3+4} world",DEFAULT_TEMPLATE_PARSER_CONTEXT);
 		String s = ex.getValue(TestScenarioCreator.getTestEvaluationContext(),String.class);
@@ -202,13 +207,13 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	}
 
 	@Test
-	public void testParsingNormalExpressionThroughTemplateParser() throws Exception {
+	void parsingNormalExpressionThroughTemplateParser() {
 		Expression expr = parser.parseExpression("1+2+3");
 		assertThat(expr.getValue()).isEqualTo(6);
 	}
 
 	@Test
-	public void testErrorCases() throws Exception {
+	void errorCases() {
 		assertThatExceptionOfType(ParseException.class).isThrownBy(() ->
 				parser.parseExpression("hello ${'world'", DEFAULT_TEMPLATE_PARSER_CONTEXT))
 			.satisfies(pex -> {
@@ -224,7 +229,7 @@ public class TemplateExpressionParsingTests extends AbstractExpressionTests {
 	}
 
 	@Test
-	public void testTemplateParserContext() {
+	void testTemplateParserContext() {
 		TemplateParserContext tpc = new TemplateParserContext("abc","def");
 		assertThat(tpc.getExpressionPrefix()).isEqualTo("abc");
 		assertThat(tpc.getExpressionSuffix()).isEqualTo("def");

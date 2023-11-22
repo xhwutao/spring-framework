@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.messaging.handler.annotation.support;
 import java.lang.annotation.Annotation;
 
 import org.springframework.core.MethodParameter;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.MessageConversionException;
@@ -36,12 +35,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.validation.SmartValidator;
 import org.springframework.validation.Validator;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.validation.annotation.ValidationAnnotationUtils;
 
 /**
  * A resolver to extract and convert the payload of a message using a
- * {@link MessageConverter}. It also validates the payload using a
- * {@link Validator} if the argument is annotated with a Validation annotation.
+ * {@link MessageConverter}.
+ *
+ * <p>Validation is applied if the method argument is annotated with
+ * {@link org.springframework.validation.annotation.Validated} or
+ * {@code @javax.validation.Valid}. Validation failure results in an
+ * {@link MethodArgumentNotValidException}.
  *
  * <p>This {@link HandlerMethodArgumentResolver} should be ordered last as it
  * supports all types and does not require the {@link Payload} annotation.
@@ -190,9 +193,6 @@ public class PayloadMethodArgumentResolver implements HandlerMethodArgumentResol
 
 	/**
 	 * Validate the payload if applicable.
-	 * <p>The default implementation checks for {@code @javax.validation.Valid},
-	 * Spring's {@link Validated},
-	 * and custom annotations whose name starts with "Valid".
 	 * @param message the currently processed message
 	 * @param parameter the method parameter
 	 * @param target the target payload object
@@ -203,10 +203,8 @@ public class PayloadMethodArgumentResolver implements HandlerMethodArgumentResol
 			return;
 		}
 		for (Annotation ann : parameter.getParameterAnnotations()) {
-			Validated validatedAnn = AnnotationUtils.getAnnotation(ann, Validated.class);
-			if (validatedAnn != null || ann.annotationType().getSimpleName().startsWith("Valid")) {
-				Object hints = (validatedAnn != null ? validatedAnn.value() : AnnotationUtils.getValue(ann));
-				Object[] validationHints = (hints instanceof Object[] ? (Object[]) hints : new Object[] {hints});
+			Object[] validationHints = ValidationAnnotationUtils.determineValidationHints(ann);
+			if (validationHints != null) {
 				BeanPropertyBindingResult bindingResult =
 						new BeanPropertyBindingResult(target, getParameterName(parameter));
 				if (!ObjectUtils.isEmpty(validationHints) && this.validator instanceof SmartValidator) {

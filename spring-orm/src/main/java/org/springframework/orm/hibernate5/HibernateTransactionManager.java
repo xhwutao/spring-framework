@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,13 +100,11 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 4.2
  * @see #setSessionFactory
- * @see #setDataSource
  * @see SessionFactory#getCurrentSession()
- * @see DataSourceUtils#getConnection
- * @see DataSourceUtils#releaseConnection
  * @see org.springframework.jdbc.core.JdbcTemplate
- * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
- * @see org.springframework.transaction.jta.JtaTransactionManager
+ * @see org.springframework.jdbc.support.JdbcTransactionManager
+ * @see org.springframework.orm.jpa.JpaTransactionManager
+ * @see org.springframework.orm.jpa.vendor.HibernateJpaDialect
  */
 @SuppressWarnings("serial")
 public class HibernateTransactionManager extends AbstractPlatformTransactionManager
@@ -271,7 +269,11 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	 * @see Connection#setHoldability
 	 * @see ResultSet#HOLD_CURSORS_OVER_COMMIT
 	 * @see #disconnectOnCompletion(Session)
+	 * @deprecated as of 5.3.29 since Hibernate 5.x aggressively closes ResultSets on commit,
+	 * making it impossible to rely on ResultSet holdability. Also, Spring does not provide
+	 * an equivalent setting on {@link org.springframework.orm.jpa.JpaTransactionManager}.
 	 */
+	@Deprecated
 	public void setAllowResultAccessAfterCompletion(boolean allowResultAccessAfterCompletion) {
 		this.allowResultAccessAfterCompletion = allowResultAccessAfterCompletion;
 	}
@@ -775,8 +777,6 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	/**
 	 * Convert the given HibernateException to an appropriate exception
 	 * from the {@code org.springframework.dao} hierarchy.
-	 * <p>Will automatically apply a specified SQLExceptionTranslator to a
-	 * Hibernate JDBCException, else rely on Hibernate's default translation.
 	 * @param ex the HibernateException that occurred
 	 * @return a corresponding DataAccessException
 	 * @see SessionFactoryUtils#convertHibernateAccessException

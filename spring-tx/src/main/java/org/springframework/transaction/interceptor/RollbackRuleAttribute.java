@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,8 +159,8 @@ public class RollbackRuleAttribute implements Serializable{
 		if (!(other instanceof RollbackRuleAttribute)) {
 			return false;
 		}
-		RollbackRuleAttribute rhs = (RollbackRuleAttribute) other;
-		return this.exceptionPattern.equals(rhs.exceptionPattern);
+		RollbackRuleAttribute otherAttr = (RollbackRuleAttribute) other;
+		return this.exceptionPattern.equals(otherAttr.exceptionPattern);
 	}
 
 	@Override

@@ -16,16 +16,6 @@
 
 package org.springframework.beans;
 
-import kotlin.jvm.JvmClassMappingKt;
-import kotlin.reflect.KFunction;
-import kotlin.reflect.KParameter;
-import kotlin.reflect.full.KClasses;
-import kotlin.reflect.jvm.KCallablesJvm;
-import kotlin.reflect.jvm.ReflectJvmMapping;
-import org.springframework.core.*;
-import org.springframework.lang.Nullable;
-import org.springframework.util.*;
-
 import java.beans.ConstructorProperties;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditor;
@@ -33,10 +23,39 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.time.temporal.Temporal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KFunction;
+import kotlin.reflect.KParameter;
+import kotlin.reflect.full.KClasses;
+import kotlin.reflect.jvm.KCallablesJvm;
+import kotlin.reflect.jvm.ReflectJvmMapping;
+
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.core.KotlinDetector;
+import org.springframework.core.MethodParameter;
+import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.ResolvableType;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Static convenience methods for JavaBeans: for instantiating beans,
@@ -174,7 +193,6 @@ public abstract class BeanUtils {
 	public static <T> T instantiateClass(Constructor<T> ctor, Object... args) throws BeanInstantiationException {
 		Assert.notNull(ctor, "Constructor must not be null");
 		try {
-			//设置构造方法，可访问
 			ReflectionUtils.makeAccessible(ctor);
 			if (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(ctor.getDeclaringClass())) {
 				return KotlinDelegate.instantiateClass(ctor, args);
@@ -192,11 +210,9 @@ public abstract class BeanUtils {
 						argsWithDefaultValues[i] = args[i];
 					}
 				}
-				//使用构造方法，创建对象
 				return ctor.newInstance(argsWithDefaultValues);
 			}
 		}
-		//各种异常的翻译，最终统一抛出 BeanInstantiationException 异常
 		catch (InstantiationException ex) {
 			throw new BeanInstantiationException(ctor, "Is it an abstract class?", ex);
 		}
@@ -773,38 +789,28 @@ public abstract class BeanUtils {
 		if (editable != null) {
 			if (!editable.isInstance(target)) {
 				throw new IllegalArgumentException("Target class [" + target.getClass().getName() +
-						"] not assignable to Editable class [" + editable.getName() + "]");
+						"] not assignable to editable class [" + editable.getName() + "]");
 			}
 			actualEditable = editable;
 		}
 		PropertyDescriptor[] targetPds = getPropertyDescriptors(actualEditable);
-		List<String> ignoreList = (ignoreProperties != null ? Arrays.asList(ignoreProperties) : null);
+		Set<String> ignoredProps = (ignoreProperties != null ? new HashSet<>(Arrays.asList(ignoreProperties)) : null);
+		CachedIntrospectionResults sourceResults = (actualEditable != source.getClass() ?
+				CachedIntrospectionResults.forClass(source.getClass()) : null);
 
 		for (PropertyDescriptor targetPd : targetPds) {
 			Method writeMethod = targetPd.getWriteMethod();
-			if (writeMethod != null && (ignoreList == null || !ignoreList.contains(targetPd.getName()))) {
-				PropertyDescriptor sourcePd = getPropertyDescriptor(source.getClass(), targetPd.getName());
+			if (writeMethod != null && (ignoredProps == null || !ignoredProps.contains(targetPd.getName()))) {
+				PropertyDescriptor sourcePd = (sourceResults != null ?
+						sourceResults.getPropertyDescriptor(targetPd.getName()) : targetPd);
 				if (sourcePd != null) {
 					Method readMethod = sourcePd.getReadMethod();
 					if (readMethod != null) {
-						ResolvableType sourceResolvableType = ResolvableType.forMethodReturnType(readMethod);
-						ResolvableType targetResolvableType = ResolvableType.forMethodParameter(writeMethod, 0);
-
-						// Ignore generic types in assignable check if either ResolvableType has unresolvable generics.
-						boolean isAssignable =
-								(sourceResolvableType.hasUnresolvableGenerics() || targetResolvableType.hasUnresolvableGenerics() ?
-										ClassUtils.isAssignable(writeMethod.getParameterTypes()[0], readMethod.getReturnType()) :
-										targetResolvableType.isAssignableFrom(sourceResolvableType));
-
-						if (isAssignable) {
+						if (isAssignable(writeMethod, readMethod)) {
 							try {
-								if (!Modifier.isPublic(readMethod.getDeclaringClass().getModifiers())) {
-									readMethod.setAccessible(true);
-								}
+								ReflectionUtils.makeAccessible(readMethod);
 								Object value = readMethod.invoke(source);
-								if (!Modifier.isPublic(writeMethod.getDeclaringClass().getModifiers())) {
-									writeMethod.setAccessible(true);
-								}
+								ReflectionUtils.makeAccessible(writeMethod);
 								writeMethod.invoke(target, value);
 							}
 							catch (Throwable ex) {
@@ -815,6 +821,24 @@ public abstract class BeanUtils {
 					}
 				}
 			}
+		}
+	}
+
+	private static boolean isAssignable(Method writeMethod, Method readMethod) {
+		Type paramType = writeMethod.getGenericParameterTypes()[0];
+		if (paramType instanceof Class) {
+			return ClassUtils.isAssignable((Class<?>) paramType, readMethod.getReturnType());
+		}
+		else if (paramType.equals(readMethod.getGenericReturnType())) {
+			return true;
+		}
+		else {
+			ResolvableType sourceType = ResolvableType.forMethodReturnType(readMethod);
+			ResolvableType targetType = ResolvableType.forMethodParameter(writeMethod, 0);
+			// Ignore generic types in assignable check if either ResolvableType has unresolvable generics.
+			return (sourceType.hasUnresolvableGenerics() || targetType.hasUnresolvableGenerics() ?
+					ClassUtils.isAssignable(writeMethod.getParameterTypes()[0], readMethod.getReturnType()) :
+					targetType.isAssignableFrom(sourceType));
 		}
 	}
 
@@ -878,7 +902,6 @@ public abstract class BeanUtils {
 			}
 			return kotlinConstructor.callBy(argParameters);
 		}
-
 	}
 
 }

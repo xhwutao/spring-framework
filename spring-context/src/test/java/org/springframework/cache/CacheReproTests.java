@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,7 @@ class CacheReproTests {
 		assertThat(cacheResolver.getCache("foo").get("foo")).isNull();
 		Object result = bean.getSimple("foo");  // cache name = id
 		assertThat(cacheResolver.getCache("foo").get("foo").get()).isEqualTo(result);
+
 		context.close();
 	}
 
@@ -127,7 +128,7 @@ class CacheReproTests {
 		Spr13081Service bean = context.getBean(Spr13081Service.class);
 
 		assertThatIllegalStateException().isThrownBy(() -> bean.getSimple(null))
-			.withMessageContaining(MyCacheResolver.class.getName());
+				.withMessageContaining(MyCacheResolver.class.getName());
 		context.close();
 	}
 
@@ -146,6 +147,7 @@ class CacheReproTests {
 		TestBean tb2 = bean.findById("tb1").get();
 		assertThat(tb2).isNotSameAs(tb);
 		assertThat(cache.get("tb1").get()).isSameAs(tb2);
+
 		context.close();
 	}
 
@@ -177,6 +179,7 @@ class CacheReproTests {
 		bean.insertItem(tb);
 		assertThat(bean.findById("tb1").get()).isSameAs(tb);
 		assertThat(cache.get("tb1").get()).isSameAs(tb);
+
 		context.close();
 	}
 
@@ -190,6 +193,7 @@ class CacheReproTests {
 		bean.insertItem(tb);
 		assertThat(bean.findById("tb1").get()).isSameAs(tb);
 		assertThat(cache.get("tb1").get()).isSameAs(tb);
+
 		context.close();
 	}
 

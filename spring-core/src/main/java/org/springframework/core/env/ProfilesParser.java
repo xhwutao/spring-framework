@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ final class ProfilesParser {
 
 
 	static Profiles parse(String... expressions) {
-		Assert.notEmpty(expressions, "Must specify at least one profile");
+		Assert.notEmpty(expressions, "Must specify at least one profile expression");
 		Profiles[] parsed = new Profiles[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
 			parsed[i] = parseExpression(expressions[i]);
@@ -71,8 +71,8 @@ final class ProfilesParser {
 			}
 			switch (token) {
 				case "(":
-					Profiles contents = parseTokens(expression, tokens, Context.BRACKET);
-					if (context == Context.INVERT) {
+					Profiles contents = parseTokens(expression, tokens, Context.PARENTHESIS);
+					if (context == Context.NEGATE) {
 						return contents;
 					}
 					elements.add(contents);
@@ -86,11 +86,11 @@ final class ProfilesParser {
 					operator = Operator.OR;
 					break;
 				case "!":
-					elements.add(not(parseTokens(expression, tokens, Context.INVERT)));
+					elements.add(not(parseTokens(expression, tokens, Context.NEGATE)));
 					break;
 				case ")":
 					Profiles merged = merge(expression, elements, operator);
-					if (context == Context.BRACKET) {
+					if (context == Context.PARENTHESIS) {
 						return merged;
 					}
 					elements.clear();
@@ -99,7 +99,7 @@ final class ProfilesParser {
 					break;
 				default:
 					Profiles value = equals(token);
-					if (context == Context.INVERT) {
+					if (context == Context.NEGATE) {
 						return value;
 					}
 					elements.add(value);
@@ -137,15 +137,14 @@ final class ProfilesParser {
 		return activeProfile -> activeProfile.test(profile);
 	}
 
-	private static Predicate<Profiles> isMatch(Predicate<String> activeProfile) {
-		return profiles -> profiles.matches(activeProfile);
+	private static Predicate<Profiles> isMatch(Predicate<String> activeProfiles) {
+		return profiles -> profiles.matches(activeProfiles);
 	}
 
 
-	private enum Operator {AND, OR}
+	private enum Operator { AND, OR }
 
-
-	private enum Context {NONE, INVERT, BRACKET}
+	private enum Context { NONE, NEGATE, PARENTHESIS }
 
 
 	private static class ParsedProfiles implements Profiles {
@@ -170,19 +169,11 @@ final class ProfilesParser {
 		}
 
 		@Override
-		public int hashCode() {
-			return this.expressions.hashCode();
-		}
-
-		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
 			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			ParsedProfiles that = (ParsedProfiles) obj;
@@ -190,10 +181,14 @@ final class ProfilesParser {
 		}
 
 		@Override
+		public int hashCode() {
+			return this.expressions.hashCode();
+		}
+
+		@Override
 		public String toString() {
 			return StringUtils.collectionToDelimitedString(this.expressions, " or ");
 		}
-
 	}
 
 }

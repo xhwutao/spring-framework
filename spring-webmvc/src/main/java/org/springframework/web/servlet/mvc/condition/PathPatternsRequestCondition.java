@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,11 +75,9 @@ public final class PathPatternsRequestCondition extends AbstractRequestCondition
 			return EMPTY_PATH_PATTERN;
 		}
 		SortedSet<PathPattern> result = new TreeSet<>();
-		for (String path : patterns) {
-			if (StringUtils.hasText(path) && !path.startsWith("/")) {
-				path = "/" + path;
-			}
-			result.add(parser.parse(path));
+		for (String pattern : patterns) {
+			pattern = parser.initFullPathPattern(pattern);
+			result.add(parser.parse(pattern));
 		}
 		return result;
 	}

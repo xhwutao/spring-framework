@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ class EnableLoadTimeWeavingTests {
 
 
 	@Configuration
-	@EnableLoadTimeWeaving(aspectjWeaving=AspectJWeaving.DISABLED)
+	@EnableLoadTimeWeaving(aspectjWeaving = AspectJWeaving.DISABLED)
 	static class EnableLTWConfig_withAjWeavingDisabled implements LoadTimeWeavingConfigurer {
 
 		@Override
@@ -88,8 +88,9 @@ class EnableLoadTimeWeavingTests {
 		}
 	}
 
+
 	@Configuration
-	@EnableLoadTimeWeaving(aspectjWeaving=AspectJWeaving.AUTODETECT)
+	@EnableLoadTimeWeaving(aspectjWeaving = AspectJWeaving.AUTODETECT)
 	static class EnableLTWConfig_withAjWeavingAutodetect implements LoadTimeWeavingConfigurer {
 
 		@Override
@@ -98,8 +99,9 @@ class EnableLoadTimeWeavingTests {
 		}
 	}
 
+
 	@Configuration
-	@EnableLoadTimeWeaving(aspectjWeaving=AspectJWeaving.ENABLED)
+	@EnableLoadTimeWeaving(aspectjWeaving = AspectJWeaving.ENABLED)
 	static class EnableLTWConfig_withAjWeavingEnabled implements LoadTimeWeavingConfigurer {
 
 		@Override

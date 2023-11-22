@@ -29,48 +29,42 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.reactive.AbstractReactiveTransactionManager;
 import org.springframework.transaction.reactive.GenericReactiveTransaction;
 import org.springframework.transaction.reactive.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
- * {@link org.springframework.transaction.ReactiveTransactionManager}
- * implementation for a single R2DBC {@link ConnectionFactory}. This class is
- * capable of working in any environment with any R2DBC driver, as long as the
- * setup uses a {@code ConnectionFactory} as its {@link Connection} factory
- * mechanism. Binds a R2DBC {@code Connection} from the specified
- * {@code ConnectionFactory} to the current subscriber context, potentially
- * allowing for one context-bound {@code Connection} per {@code ConnectionFactory}.
+ * {@link org.springframework.transaction.ReactiveTransactionManager} implementation
+ * for a single R2DBC {@link ConnectionFactory}. This class is capable of working
+ * in any environment with any R2DBC driver, as long as the setup uses a
+ * {@code ConnectionFactory} as its {@link Connection} factory mechanism.
+ * Binds a R2DBC {@code Connection} from the specified {@code ConnectionFactory}
+ * to the current subscriber context, potentially allowing for one context-bound
+ * {@code Connection} per {@code ConnectionFactory}.
  *
- * <p><b>Note: The {@code ConnectionFactory} that this transaction manager
- * operates on needs to return independent {@code Connection}s.</b>
- * The {@code Connection}s may come from a pool (the typical case), but the
- * {@code ConnectionFactory} must not return scoped {@code Connection}s
- * or the like. This transaction manager will associate {@code Connection}
- * with context-bound transactions itself, according to the specified propagation
- * behavior. It assumes that a separate, independent {@code Connection} can
- * be obtained even during an ongoing transaction.
+ * <p><b>Note: The {@code ConnectionFactory} that this transaction manager operates
+ * on needs to return independent {@code Connection}s.</b> The {@code Connection}s
+ * typically come from a connection pool but the {@code ConnectionFactory} must not
+ * return specifically scoped or constrained {@code Connection}s. This transaction
+ * manager will associate {@code Connection} with context-bound transactions,
+ * according to the specified propagation behavior. It assumes that a separate,
+ * independent {@code Connection} can be obtained even during an ongoing transaction.
  *
  * <p>Application code is required to retrieve the R2DBC Connection via
  * {@link ConnectionFactoryUtils#getConnection(ConnectionFactory)}
  * instead of a standard R2DBC-style {@link ConnectionFactory#create()} call.
  * Spring classes such as {@code DatabaseClient} use this strategy implicitly.
  * If not used in combination with this transaction manager, the
- * {@link ConnectionFactoryUtils} lookup strategy behaves exactly like the
- * native {@code ConnectionFactory} lookup; it can thus be used in a portable fashion.
+ * {@link ConnectionFactoryUtils} lookup strategy behaves exactly like the native
+ * {@code ConnectionFactory} lookup; it can thus be used in a portable fashion.
  *
- * <p>Alternatively, you can allow application code to work with the standard
- * R2DBC lookup pattern {@link ConnectionFactory#create()}, for example for code
- * that is not aware of Spring at all. In that case, define a
- * {@link TransactionAwareConnectionFactoryProxy} for your target {@code ConnectionFactory},
- * and pass that proxy {@code ConnectionFactory} to your DAOs, which will automatically
- * participate in Spring-managed transactions when accessing it.
- *
- * <p>This transaction manager triggers flush callbacks on registered transaction
- * synchronizations (if synchronization is generally active), assuming resources
- * operating on the underlying R2DBC {@code Connection}.
+ * <p>Alternatively, you can allow application code to work with the lookup pattern
+ * {@link ConnectionFactory#create()}, for example for code not aware of Spring.
+ * In that case, define a {@link TransactionAwareConnectionFactoryProxy} for your
+ * target {@code ConnectionFactory}, and pass that proxy {@code ConnectionFactory}
+ * to your DAOs which will automatically participate in Spring-managed transactions
+ * when accessing it.
  *
  * @author Mark Paluch
  * @since 5.3
@@ -89,7 +83,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	/**
 	 * Create a new {@code R2dbcTransactionManager} instance.
-	 * A ConnectionFactory has to be set to be able to use it.
+	 * A {@code ConnectionFactory} has to be set to be able to use it.
 	 * @see #setConnectionFactory
 	 */
 	public R2dbcTransactionManager() {}
@@ -106,12 +100,13 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 
 	/**
-	 * Set the R2DBC {@link ConnectionFactory} that this instance should manage transactions for.
-	 * <p>This will typically be a locally defined {@code ConnectionFactory}, for example a connection pool.
-	 * <p><b>The {@code ConnectionFactory} passed in here needs to return independent {@link Connection}s.</b>
-	 * The {@code Connection}s may come from a pool (the typical case), but the {@code ConnectionFactory}
-	 * must not return scoped {@code Connection}s or the like.
-	 * @see TransactionAwareConnectionFactoryProxy
+	 * Set the R2DBC {@link ConnectionFactory} that this instance should manage transactions
+	 * for. This will typically be a locally defined {@code ConnectionFactory}, for example
+	 * an R2DBC connection pool.
+	 * <p><b>The {@code ConnectionFactory} passed in here needs to return independent
+	 * {@link Connection}s.</b> The {@code Connection}s typically come from a connection
+	 * pool but the {@code ConnectionFactory} must not return specifically scoped or
+	 * constrained {@code Connection}s.
 	 */
 	public void setConnectionFactory(@Nullable ConnectionFactory connectionFactory) {
 		this.connectionFactory = connectionFactory;
@@ -142,8 +137,8 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 * transactional connection: "SET TRANSACTION READ ONLY" as understood by Oracle,
 	 * MySQL and Postgres.
 	 * <p>The exact treatment, including any SQL statement executed on the connection,
-	 * can be customized through {@link #prepareTransactionalConnection(Connection, TransactionDefinition)}.
-	 * @see #prepareTransactionalConnection(Connection, TransactionDefinition)
+	 * can be customized through {@link #prepareTransactionalConnection}.
+	 * @see #prepareTransactionalConnection
 	 */
 	public void setEnforceReadOnly(boolean enforceReadOnly) {
 		this.enforceReadOnly = enforceReadOnly;
@@ -166,7 +161,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	}
 
 	@Override
-	protected Object doGetTransaction(TransactionSynchronizationManager synchronizationManager) throws TransactionException {
+	protected Object doGetTransaction(TransactionSynchronizationManager synchronizationManager) {
 		ConnectionFactoryTransactionObject txObject = new ConnectionFactoryTransactionObject();
 		ConnectionHolder conHolder = (ConnectionHolder) synchronizationManager.getResource(obtainConnectionFactory());
 		txObject.setConnectionHolder(conHolder, false);
@@ -182,7 +177,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	@SuppressWarnings("deprecation")
 	@Override
 	protected Mono<Void> doBegin(TransactionSynchronizationManager synchronizationManager, Object transaction,
-			TransactionDefinition definition) throws TransactionException {
+			TransactionDefinition definition) {
 
 		ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) transaction;
 
@@ -247,9 +242,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	}
 
 	@Override
-	protected Mono<Object> doSuspend(TransactionSynchronizationManager synchronizationManager, Object transaction)
-			throws TransactionException {
-
+	protected Mono<Object> doSuspend(TransactionSynchronizationManager synchronizationManager, Object transaction) {
 		return Mono.defer(() -> {
 			ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) transaction;
 			txObject.setConnectionHolder(null);
@@ -259,7 +252,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	@Override
 	protected Mono<Void> doResume(TransactionSynchronizationManager synchronizationManager,
-			@Nullable Object transaction, Object suspendedResources) throws TransactionException {
+			@Nullable Object transaction, Object suspendedResources) {
 
 		return Mono.defer(() -> {
 			synchronizationManager.bindResource(obtainConnectionFactory(), suspendedResources);
@@ -269,7 +262,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	@Override
 	protected Mono<Void> doCommit(TransactionSynchronizationManager TransactionSynchronizationManager,
-			GenericReactiveTransaction status) throws TransactionException {
+			GenericReactiveTransaction status) {
 
 		ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) status.getTransaction();
 		Connection connection = txObject.getConnectionHolder().getConnection();
@@ -282,7 +275,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	@Override
 	protected Mono<Void> doRollback(TransactionSynchronizationManager TransactionSynchronizationManager,
-			GenericReactiveTransaction status) throws TransactionException {
+			GenericReactiveTransaction status) {
 
 		ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) status.getTransaction();
 		Connection connection = txObject.getConnectionHolder().getConnection();
@@ -295,7 +288,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	@Override
 	protected Mono<Void> doSetRollbackOnly(TransactionSynchronizationManager synchronizationManager,
-			GenericReactiveTransaction status) throws TransactionException {
+			GenericReactiveTransaction status) {
 
 		return Mono.fromRunnable(() -> {
 			ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) status.getTransaction();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,26 @@
 
 package org.springframework.util;
 
+import java.io.File;
 import java.lang.reflect.Array;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.temporal.Temporal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Currency;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.TimeZone;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.springframework.lang.Nullable;
 
@@ -55,6 +69,9 @@ public abstract class ObjectUtils {
 	private static final String EMPTY_ARRAY = ARRAY_START + ARRAY_END;
 	private static final String ARRAY_ELEMENT_SEPARATOR = ", ";
 	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+	private static final String NON_EMPTY_ARRAY = ARRAY_START + "..." + ARRAY_END;
+	private static final String COLLECTION = "[...]";
+	private static final String MAP = NON_EMPTY_ARRAY;
 
 
 	/**
@@ -653,6 +670,7 @@ public abstract class ObjectUtils {
 	 * Returns a {@code "null"} String if {@code obj} is {@code null}.
 	 * @param obj the object to build a String representation for
 	 * @return a String representation of {@code obj}
+	 * @see #nullSafeConciseToString(Object)
 	 */
 	public static String nullSafeToString(@Nullable Object obj) {
 		if (obj == null) {
@@ -906,6 +924,117 @@ public abstract class ObjectUtils {
 			stringJoiner.add(String.valueOf(s));
 		}
 		return stringJoiner.toString();
+	}
+
+	/**
+	 * Generate a null-safe, concise string representation of the supplied object
+	 * as described below.
+	 * <p>Favor this method over {@link #nullSafeToString(Object)} when you need
+	 * the length of the generated string to be limited.
+	 * <p>Returns:
+	 * <ul>
+	 * <li>{@code "null"} if {@code obj} is {@code null}</li>
+	 * <li>{@code"Optional.empty"} if {@code obj} is an empty {@link Optional}</li>
+	 * <li>{@code"Optional[<concise-string>]"} if {@code obj} is a non-empty {@code Optional},
+	 * where {@code <concise-string>} is the result of invoking {@link #nullSafeConciseToString}
+	 * on the object contained in the {@code Optional}</li>
+	 * <li>{@code "{}"} if {@code obj} is an empty array</li>
+	 * <li>{@code "{...}"} if {@code obj} is a {@link Map} or a non-empty array</li>
+	 * <li>{@code "[...]"} if {@code obj} is a {@link Collection}</li>
+	 * <li>{@linkplain Class#getName() Class name} if {@code obj} is a {@link Class}</li>
+	 * <li>{@linkplain Charset#name() Charset name} if {@code obj} is a {@link Charset}</li>
+	 * <li>{@linkplain TimeZone#getID() TimeZone ID} if {@code obj} is a {@link TimeZone}</li>
+	 * <li>{@linkplain ZoneId#getId() Zone ID} if {@code obj} is a {@link ZoneId}</li>
+	 * <li>Potentially {@linkplain StringUtils#truncate(CharSequence) truncated string}
+	 * if {@code obj} is a {@link String} or {@link CharSequence}</li>
+	 * <li>Potentially {@linkplain StringUtils#truncate(CharSequence) truncated string}
+	 * if {@code obj} is a <em>simple value type</em> whose {@code toString()} method
+	 * returns a non-null value</li>
+	 * <li>Otherwise, a string representation of the object's type name concatenated
+	 * with {@code "@"} and a hex string form of the object's identity hash code</li>
+	 * </ul>
+	 * <p>In the context of this method, a <em>simple value type</em> is any of the following:
+	 * primitive wrapper (excluding {@link Void}), {@link Enum}, {@link Number},
+	 * {@link Date}, {@link Temporal}, {@link File}, {@link Path}, {@link URI},
+	 * {@link URL}, {@link InetAddress}, {@link Currency}, {@link Locale},
+	 * {@link UUID}, {@link Pattern}.
+	 * @param obj the object to build a string representation for
+	 * @return a concise string representation of the supplied object
+	 * @since 5.3.27
+	 * @see #nullSafeToString(Object)
+	 * @see StringUtils#truncate(CharSequence)
+	 */
+	public static String nullSafeConciseToString(@Nullable Object obj) {
+		if (obj == null) {
+			return "null";
+		}
+		if (obj instanceof Optional<?>) {
+			Optional<?> optional = (Optional<?>) obj;
+			return (!optional.isPresent() ? "Optional.empty" :
+					String.format("Optional[%s]", nullSafeConciseToString(optional.get())));
+		}
+		if (obj.getClass().isArray()) {
+			return (Array.getLength(obj) == 0 ? EMPTY_ARRAY : NON_EMPTY_ARRAY);
+		}
+		if (obj instanceof Collection) {
+			return COLLECTION;
+		}
+		if (obj instanceof Map) {
+			return MAP;
+		}
+		if (obj instanceof Class<?>) {
+			return ((Class<?>) obj).getName();
+		}
+		if (obj instanceof Charset) {
+			return ((Charset) obj).name();
+		}
+		if (obj instanceof TimeZone) {
+			return ((TimeZone) obj).getID();
+		}
+		if (obj instanceof ZoneId) {
+			return ((ZoneId) obj).getId();
+		}
+		if (obj instanceof CharSequence) {
+			return StringUtils.truncate((CharSequence) obj);
+		}
+		Class<?> type = obj.getClass();
+		if (isSimpleValueType(type)) {
+			String str = obj.toString();
+			if (str != null) {
+				return StringUtils.truncate(str);
+			}
+		}
+		return type.getTypeName() + "@" + getIdentityHexString(obj);
+	}
+
+	/**
+	 * Derived from {@link org.springframework.beans.BeanUtils#isSimpleValueType}.
+	 * <p>As of 5.3.28, considering {@link UUID} in addition to the bean-level check.
+	 * <p>As of 5.3.29, additionally considering {@link File}, {@link Path},
+	 * {@link InetAddress}, {@link Charset}, {@link Currency}, {@link TimeZone},
+	 * {@link ZoneId}, {@link Pattern}.
+	 */
+	private static boolean isSimpleValueType(Class<?> type) {
+		return (Void.class != type && void.class != type &&
+				(ClassUtils.isPrimitiveOrWrapper(type) ||
+				Enum.class.isAssignableFrom(type) ||
+				CharSequence.class.isAssignableFrom(type) ||
+				Number.class.isAssignableFrom(type) ||
+				Date.class.isAssignableFrom(type) ||
+				Temporal.class.isAssignableFrom(type) ||
+				ZoneId.class.isAssignableFrom(type) ||
+				TimeZone.class.isAssignableFrom(type) ||
+				File.class.isAssignableFrom(type) ||
+				Path.class.isAssignableFrom(type) ||
+				Charset.class.isAssignableFrom(type) ||
+				Currency.class.isAssignableFrom(type) ||
+				InetAddress.class.isAssignableFrom(type) ||
+				URI.class == type ||
+				URL.class == type ||
+				UUID.class == type ||
+				Locale.class == type ||
+				Pattern.class == type ||
+				Class.class == type));
 	}
 
 }
