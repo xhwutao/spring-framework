@@ -28,11 +28,11 @@ configure(allprojects) { project ->
 	dependencyManagement {
 		imports {
 			mavenBom "com.fasterxml.jackson:jackson-bom:2.12.7"
-			mavenBom "io.netty:netty-bom:4.1.101.Final"
-			mavenBom "io.projectreactor:reactor-bom:2020.0.38"
+			mavenBom "io.netty:netty-bom:4.1.107.Final"
+			mavenBom "io.projectreactor:reactor-bom:2020.0.42"
 			mavenBom "io.r2dbc:r2dbc-bom:Arabba-SR13"
 			mavenBom "io.rsocket:rsocket-bom:1.1.3"
-			mavenBom "org.eclipse.jetty:jetty-bom:9.4.53.v20231009"
+			mavenBom "org.eclipse.jetty:jetty-bom:9.4.54.v20240208"
 			mavenBom "org.jetbrains.kotlin:kotlin-bom:1.5.32"
 			mavenBom "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.5.2"
 			mavenBom "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.2.2"
@@ -139,7 +139,7 @@ configure(allprojects) { project ->
 				entry 'tomcat-embed-core'
 				entry 'tomcat-embed-websocket'
 			}
-			dependencySet(group: 'io.undertow', version: '2.2.28.Final') {
+			dependencySet(group: 'io.undertow', version: '2.2.29.Final') {
 				entry 'undertow-core'
 				entry('undertow-servlet') {
 					exclude group: "org.jboss.spec.javax.servlet", name: "jboss-servlet-api_4.0_spec"
@@ -340,7 +340,7 @@ configure([rootProject] + javaProjects) { project ->
 	}
 
 	checkstyle {
-		toolVersion = "10.12.5"
+		toolVersion = "10.12.7"
 		configDirectory.set(rootProject.file("src/checkstyle"))
 	}
 
@@ -362,7 +362,7 @@ configure([rootProject] + javaProjects) { project ->
 		// JSR-305 only used for non-required meta-annotations
 		compileOnly("com.google.code.findbugs:jsr305")
 		testCompileOnly("com.google.code.findbugs:jsr305")
-		checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.31")
+		checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.41")
 	}
 
 	ext.javadocLinks = [
@@ -375,8 +375,9 @@ configure([rootProject] + javaProjects) { project ->
 			"https://tiles.apache.org/tiles-request/apidocs/",
 			"https://tiles.apache.org/framework/apidocs/",
 			"https://www.eclipse.org/aspectj/doc/released/aspectj5rt-api/",
-			"https://www.ehcache.org/apidocs/2.10.4/",
-			"https://www.quartz-scheduler.org/api/2.3.0/",
+			// Temporarily commenting out Ehcache and Quartz since javadoc on JDK 8 cannot access them.
+			// "https://www.ehcache.org/apidocs/2.10.4/",
+			// "https://www.quartz-scheduler.org/api/2.3.0/",
 			"https://www.javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/2.12.7/",
 			"https://www.javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.12.7/",
 			"https://www.javadoc.io/doc/com.fasterxml.jackson.dataformat/jackson-dataformat-xml/2.12.7/",
@@ -388,7 +389,8 @@ configure([rootProject] + javaProjects) { project ->
 			// "https://junit.org/junit5/docs/5.8.2/api/",
 			"https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/",
 			"https://javadoc.io/static/io.rsocket/rsocket-core/1.1.1/",
-			"https://r2dbc.io/spec/0.8.5.RELEASE/api/",
+			// Temporarily commenting out R2DBC since javadoc on JDK 8 cannot access it.
+			// "https://r2dbc.io/spec/0.8.5.RELEASE/api/",
 			// The external Javadoc link for JSR 305 must come last to ensure that types from
 			// JSR 250 (such as @PostConstruct) are still supported. This is due to the fact
 			// that JSR 250 and JSR 305 both define types in javax.annotation, which results
