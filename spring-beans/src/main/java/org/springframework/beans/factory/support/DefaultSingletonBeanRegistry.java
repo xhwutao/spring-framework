@@ -175,25 +175,31 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean to look for
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
+	 *
+	 * 返回在给定名称下注册的（原始）单例对象。
+	 * 检查已经实例化的单例，还允许对当前创建的单例进行早期引用（解析循环引用）。
+	 * beanName要查找的bean的名称
+	 * allowEarlyReference是否应创建早期引用
+	 * 返回注册的单例对象；如果没有找到，则返回null
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		// Quick check for existing instance without full singleton lock
-		Object singletonObject = this.singletonObjects.get(beanName);
-		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
-			singletonObject = this.earlySingletonObjects.get(beanName);
-			if (singletonObject == null && allowEarlyReference) {
-				synchronized (this.singletonObjects) {
-					// Consistent creation of early reference within full singleton lock
-					singletonObject = this.singletonObjects.get(beanName);
-					if (singletonObject == null) {
-						singletonObject = this.earlySingletonObjects.get(beanName);
-						if (singletonObject == null) {
-							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
-							if (singletonFactory != null) {
-								singletonObject = singletonFactory.getObject();
-								this.earlySingletonObjects.put(beanName, singletonObject);
-								this.singletonFactories.remove(beanName);
+		// Quick check for existing instance without full singleton lock 快速检查是否存在实例而无需完整的单例锁
+		Object singletonObject = this.singletonObjects.get(beanName);// 从缓存中获取单例对象
+		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {// 如果缓存中没有，但是正在创建中，那么从早期缓存中获取
+			singletonObject = this.earlySingletonObjects.get(beanName);// 从早期缓存中获取单例对象
+			if (singletonObject == null && allowEarlyReference) {// 如果早期缓存中没有，且允许早期引用，那么从单例工厂中获取
+				synchronized (this.singletonObjects) {// 加锁
+					// Consistent creation of early reference within full singleton lock 在完整的单例锁中一致地创建早期引用
+					singletonObject = this.singletonObjects.get(beanName);// 从缓存中获取单例对象
+					if (singletonObject == null) {// 如果缓存中没有，那么从早期缓存中获取
+						singletonObject = this.earlySingletonObjects.get(beanName);// 从早期缓存中获取单例对象
+						if (singletonObject == null) {// 如果早期缓存中没有，那么从单例工厂中获取
+							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);// 从单例工厂中获取单例对象
+							if (singletonFactory != null) {// 如果单例工厂中有，那么创建单例对象
+								singletonObject = singletonFactory.getObject();// 创建单例对象
+								this.earlySingletonObjects.put(beanName, singletonObject);// 将创建好的单例对象放入早期缓存中
+								this.singletonFactories.remove(beanName);// 从单例工厂中移除
 							}
 						}
 					}

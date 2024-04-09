@@ -115,6 +115,7 @@ public class InjectionMetadata {
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
+			//遍历每个注入点进行依赖注入
 			for (InjectedElement element : elementsToIterate) {
 				element.inject(target, beanName, pvs);
 			}

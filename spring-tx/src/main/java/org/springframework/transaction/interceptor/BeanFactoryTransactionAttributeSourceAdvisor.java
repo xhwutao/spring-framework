@@ -37,7 +37,10 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	@Nullable
 	private TransactionAttributeSource transactionAttributeSource;
 
+	// 这个很重要，就是切面。它决定了哪些类会被切入，从而生成的代理对象~
+	// 关于：TransactionAttributeSourcePointcut 下面有说~
 	private final TransactionAttributeSourcePointcut pointcut = new TransactionAttributeSourcePointcut() {
+		// 注意此处`getTransactionAttributeSource`就是它的一个抽象方法~~~
 		@Override
 		@Nullable
 		protected TransactionAttributeSource getTransactionAttributeSource() {
@@ -52,6 +55,7 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	 * set on the transaction interceptor itself.
 	 * @see TransactionInterceptor#setTransactionAttributeSource
 	 */
+	// 可议手动设置一个事务属性源~
 	public void setTransactionAttributeSource(TransactionAttributeSource transactionAttributeSource) {
 		this.transactionAttributeSource = transactionAttributeSource;
 	}
@@ -60,10 +64,12 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	 * Set the {@link ClassFilter} to use for this pointcut.
 	 * Default is {@link ClassFilter#TRUE}.
 	 */
+	// 当然我们可以指定ClassFilter  默认情况下：ClassFilter classFilter = ClassFilter.TRUE;  匹配所有的类的
 	public void setClassFilter(ClassFilter classFilter) {
 		this.pointcut.setClassFilter(classFilter);
 	}
 
+	// 此处pointcut就是使用自己的这个pointcut去切入~~~
 	@Override
 	public Pointcut getPointcut() {
 		return this.pointcut;

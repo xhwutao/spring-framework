@@ -44,7 +44,7 @@ def mainToolchainLanguageVersion() {
 	if (mainToolchainConfigured()) {
 		return JavaLanguageVersion.of(project.mainToolchain.toString())
 	}
-	return JavaLanguageVersion.of(8)
+	return JavaLanguageVersion.of(11)
 }
 
 def testToolchainLanguageVersion() {

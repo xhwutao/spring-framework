@@ -208,6 +208,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		//返回 bean 名称，剥离工厂引用前缀。
 		//如果 name 是 alias ，则获取对应映射的 beanName 。
+		//name有可能是&xXX或者XXX,如果name是&xXx,那么beanName就是xXx
+		//name有可能传入进来的是别名，那么beanName就是id
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
@@ -1621,6 +1623,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		String className = mbd.getBeanClassName();
 		if (className != null) {
+			//解Spring表达式，有可能直按返回了一个class对象
 			Object evaluated = evaluateBeanDefinitionString(className, mbd);
 			if (!className.equals(evaluated)) {
 				// A dynamically resolved expression, supported as of 4.2...

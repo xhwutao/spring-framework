@@ -224,6 +224,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * bean definition.
 	 * @param original the original bean definition to copy from
 	 */
+	/**
+	 * 通过原始的bean定义创建一个新的AbstractBeanDefinition
+	 * @param original
+	 */
 	protected AbstractBeanDefinition(BeanDefinition original) {
 		setParentName(original.getParentName());
 		setBeanClassName(original.getBeanClassName());

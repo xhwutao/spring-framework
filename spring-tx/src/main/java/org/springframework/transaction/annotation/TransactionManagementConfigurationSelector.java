@@ -46,6 +46,8 @@ public class TransactionManagementConfigurationSelector extends AdviceModeImport
 	@Override
 	protected String[] selectImports(AdviceMode adviceMode) {
 		switch (adviceMode) {
+			// 很显然，绝大部分情况下，我们都不会使用AspectJ的静态代理的~~~~~~~~
+			// 这里面会导入两个类~~~
 			case PROXY:
 				return new String[] {AutoProxyRegistrar.class.getName(),
 						ProxyTransactionManagementConfiguration.class.getName()};

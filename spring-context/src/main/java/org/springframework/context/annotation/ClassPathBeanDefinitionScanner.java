@@ -284,11 +284,13 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				if (candidate instanceof AnnotatedBeanDefinition) {
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+				//检查Spring容器中是否已经存在beanName
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);
+					//注册
 					registerBeanDefinition(definitionHolder, this.registry);
 				}
 			}
@@ -341,6 +343,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		if (originatingDef != null) {
 			existingDef = originatingDef;
 		}
+		//是否兼容，如果兼容返回false表示不会重新注册到spring容器中，如果不冲突则会抛异常
 		if (isCompatible(beanDefinition, existingDef)) {
 			return false;
 		}

@@ -121,6 +121,7 @@ public abstract class AopConfigUtils {
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 
 		//如果已经存在了自动代理创建器且存在的自动代理创建器与现在不一致，那么需要根据优先级来判断到底需要使用哪
+		//因为事务和aop都是一样的名字，所以会根据内部维护的优先级覆盖beanClass
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {

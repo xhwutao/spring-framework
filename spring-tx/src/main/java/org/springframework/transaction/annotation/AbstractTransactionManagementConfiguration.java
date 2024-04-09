@@ -42,6 +42,7 @@ import org.springframework.util.CollectionUtils;
  * @see EnableTransactionManagement
  */
 @Configuration
+// 父类（抽象类）  它实现了ImportAware接口  所以拿到@Import所在类的所有注解信息
 public abstract class AbstractTransactionManagementConfiguration implements ImportAware {
 
 	@Nullable
@@ -50,25 +51,31 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 	/**
 	 * Default transaction manager, as configured through a {@link TransactionManagementConfigurer}.
 	 */
+	// 此处：注解的默认的事务处理器（可议通过实现接口TransactionManagementConfigurer来自定义配置）
+	// 因为事务管理器这个东西，一般来说全局一个就行，但是Spring也提供了定制化的能力~~~
 	@Nullable
 	protected TransactionManager txManager;
 
 
 	@Override
 	public void setImportMetadata(AnnotationMetadata importMetadata) {
+		// 此处：只拿到@EnableTransactionManagement这个注解的就成~~~~~ 作为AnnotationAttributes保存起来
 		this.enableTx = AnnotationAttributes.fromMap(
 				importMetadata.getAnnotationAttributes(EnableTransactionManagement.class.getName()));
+		// 这个注解是必须的~~~~~~~~~~~~~~~~
 		if (this.enableTx == null) {
 			throw new IllegalArgumentException(
 					"@EnableTransactionManagement is not present on importing class " + importMetadata.getClassName());
 		}
 	}
 
-	@Autowired(required = false)
+	// 可以配置一个Bean实现这个接口。然后给注解驱动的给一个默认的事务管理器~~~~
+	// 设计模式都是想通的~~~@Autowired(required = false)
 	void setConfigurers(Collection<TransactionManagementConfigurer> configurers) {
 		if (CollectionUtils.isEmpty(configurers)) {
 			return;
 		}
+		// 同样的，最多也只允许你去配置一个~~~
 		if (configurers.size() > 1) {
 			throw new IllegalStateException("Only one TransactionManagementConfigurer may exist");
 		}
@@ -76,7 +83,8 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 		this.txManager = configurer.annotationDrivenTransactionManager();
 	}
 
-
+	// 注册一个监听器工厂，用以支持@TransactionalEventListener注解标注的方法，来监听事务相关的事件
+	// 通过事件监听模式来实现事务的监控~~~~
 	@Bean(name = TransactionManagementConfigUtils.TRANSACTIONAL_EVENT_LISTENER_FACTORY_BEAN_NAME)
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public static TransactionalEventListenerFactory transactionalEventListenerFactory() {

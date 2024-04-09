@@ -418,24 +418,35 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
+			//1. 首先，通过ResourcePatternResolver获得指定包路径下的所有 .class 文件（Spring源码中将此文件包装成了Resource对象）
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
+			//2. 遍历每个Resource对象
 			for (Resource resource : resources) {
 				if (traceEnabled) {
 					logger.trace("Scanning " + resource);
 				}
 				try {
+					//3. 利用MetadataReaderFactory解析Resource对象得到MetadataReader（在Spring源码中
+					//MetadataReaderFactory具体的实现类为CachingMetadataReaderFactory，
+					//MetadataReader的具体实现类为SimpleMetadataReader）
 					MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+					//4. 利用MetadataReader进行excludeFilters和includeFilters，以及条件注解@Conditional的筛选
+					//（条件注解并不能理解：某个类上是否存在@Conditional注解，如果存在则调用注解中所指定
+					//的类的match方法进行匹配，匹配成功则通过筛选，匹配失败则pass掉。）
 					if (isCandidateComponent(metadataReader)) {
+						//5. 筛选通过后，基于metadataReader生成ScannedGenericBeanDefinition
 						ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 						sbd.setSource(resource);
+						//6. 再基于metadataReader判断是不是对应的类是不是接口或抽象类
 						if (isCandidateComponent(sbd)) {
 							if (debugEnabled) {
 								logger.debug("Identified candidate component class: " + resource);
 							}
+							//7. 如果筛选通过，那么就表示扫描到了一个Bean，将ScannedGenericBeanDefinition加入结果集
 							candidates.add(sbd);
 						}
 						else {

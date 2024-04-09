@@ -27,6 +27,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
+ *
+ * 注入点的简单描述符，指向方法/构造函数参数或字段。
  * A simple descriptor for an injection point, pointing to a method/constructor
  * parameter or a field. Exposed by {@link UnsatisfiedDependencyException}.
  * Also available as an argument for factory methods, reacting to the
@@ -39,12 +41,15 @@ import org.springframework.util.ObjectUtils;
  */
 public class InjectionPoint {
 
+	// 包装函数参数时用于保存所包装的函数参数，内含该参数的注解信息
 	@Nullable
 	protected MethodParameter methodParameter;
 
+	// 包装成员属性时用于保存所包装的成员属性
 	@Nullable
 	protected Field field;
 
+	// 包装成员属性时用于保存所包装的成员属性的注解信息
 	@Nullable
 	private volatile Annotation[] fieldAnnotations;
 
@@ -86,6 +91,7 @@ public class InjectionPoint {
 
 
 	/**
+	 * 返回所包装的函数参数，仅在当前对象用于包装函数参数时返回非null
 	 * Return the wrapped MethodParameter, if any.
 	 * <p>Note: Either MethodParameter or Field is available.
 	 * @return the MethodParameter, or {@code null} if none
@@ -96,6 +102,7 @@ public class InjectionPoint {
 	}
 
 	/**
+	 * 返回所包装的成员属性，仅在当前对象用于包装成员属性时返回非null
 	 * Return the wrapped Field, if any.
 	 * <p>Note: Either MethodParameter or Field is available.
 	 * @return the Field, or {@code null} if none
@@ -118,6 +125,7 @@ public class InjectionPoint {
 
 	/**
 	 * Obtain the annotations associated with the wrapped field or method/constructor parameter.
+	 * 获取所包装的依赖(方法参数或者成员属性)上的注解信息
 	 */
 	public Annotation[] getAnnotations() {
 		if (this.field != null) {
@@ -135,6 +143,8 @@ public class InjectionPoint {
 
 	/**
 	 * Retrieve a field/parameter annotation of the given type, if any.
+	 * 获取所包装的依赖(方法参数或者成员属性)上的指定类型为annotationType的注解信息，
+	 * 如果该类型的注解不存在，则返回null
 	 * @param annotationType the annotation type to retrieve
 	 * @return the annotation instance, or {@code null} if none found
 	 * @since 4.3.9
@@ -155,6 +165,8 @@ public class InjectionPoint {
 
 	/**
 	 * Returns the wrapped member, containing the injection point.
+	 * 1.如果所包装的依赖是成员属性则返回该成员属性，
+	 * 2.如果所包装的依赖是成员方法参数,则返回对应的成员方法
 	 * @return the Field / Method / Constructor as Member
 	 */
 	public Member getMember() {
@@ -163,6 +175,9 @@ public class InjectionPoint {
 
 	/**
 	 * Return the wrapped annotated element.
+	 * 1.如果所包装的依赖是成员属性则返回该成员属性
+	 * 2.如果所包装的依赖是成员方法参数,则返回对应的成员方法
+	 * 可以认为该方法和 getMemer()等价
 	 * <p>Note: In case of a method/constructor parameter, this exposes
 	 * the annotations declared on the method or constructor itself
 	 * (i.e. at the method/constructor level, not at the parameter level).

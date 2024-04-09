@@ -389,6 +389,7 @@ public class BeanDefinitionParserDelegate {
 		//分割name属性
 		List<String> aliases = new ArrayList<>();
 		if (StringUtils.hasLength(nameAttr)) {
+			//tokenizeToStringArray方法将字符串按照指定的分隔符分割成字符串数组 参数delimiters eg: ",; " 同时可以传入多个分隔符
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
