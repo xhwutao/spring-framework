@@ -60,5 +60,5 @@ settings.gradle.projectsLoaded {
 		}
 	}
 }
-include 'spring-study-3'
+
 
