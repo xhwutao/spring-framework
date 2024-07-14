@@ -213,7 +213,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
-		// Eagerly check singleton cache for manually registered singletons.
+		// Eagerly check singleton cache for manually registered singletons. 急切地检查单例缓存以获取手动注册的单例。
 		/**
 		 * 检查缓存中或者实例工厂中是否有对应的实例
 		 * 为什么首先会使用这段代码呢，因为在创建单例bean的时候会存在依赖注入的情况，而在创建依赖的时候为了避免循环依赖，
@@ -222,7 +222,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 */
 		// 直接尝试从缓存获取或者singletonFactories中的ObjectFactory中获取
 		Object sharedInstance = getSingleton(beanName);
-		if (sharedInstance != null && args == null) {
+		if (sharedInstance != null && args == null) {// 如果获取到了实例，并且没有参数
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
@@ -1574,15 +1574,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
-			if (mbd.hasBeanClass()) {
+			if (mbd.hasBeanClass()) {// 如果已经有了beanClass，直接返回
 				return mbd.getBeanClass();
 			}
-			if (System.getSecurityManager() != null) {
+			if (System.getSecurityManager() != null) {// 如果有安全管理器，使用安全管理器获取
 				return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>)
 						() -> doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			}
 			else {
-				return doResolveBeanClass(mbd, typesToMatch);
+				return doResolveBeanClass(mbd, typesToMatch);// 没有安全管理器，直接获取
 			}
 		}
 		catch (PrivilegedActionException pae) {
@@ -1597,22 +1597,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 	}
 
+	// 这个方法是真正的获取beanClass的方法
 	@Nullable
 	private Class<?> doResolveBeanClass(RootBeanDefinition mbd, Class<?>... typesToMatch)
 			throws ClassNotFoundException {
 
-		ClassLoader beanClassLoader = getBeanClassLoader();
-		ClassLoader dynamicLoader = beanClassLoader;
-		boolean freshResolve = false;
+		ClassLoader beanClassLoader = getBeanClassLoader();// 获取beanClassLoader
+		ClassLoader dynamicLoader = beanClassLoader;// 动态加载器，默认是beanClassLoader
+		boolean freshResolve = false;// 是否需要重新解析
 
 		if (!ObjectUtils.isEmpty(typesToMatch)) {
 			// When just doing type checks (i.e. not creating an actual instance yet),
 			// use the specified temporary class loader (e.g. in a weaving scenario).
+			// 如果只是做类型检查，使用临时的类加载器
 			ClassLoader tempClassLoader = getTempClassLoader();
 			if (tempClassLoader != null) {
 				dynamicLoader = tempClassLoader;
 				freshResolve = true;
-				if (tempClassLoader instanceof DecoratingClassLoader) {
+				if (tempClassLoader instanceof DecoratingClassLoader) { // 如果是装饰类加载器，排除typesToMatch
 					DecoratingClassLoader dcl = (DecoratingClassLoader) tempClassLoader;
 					for (Class<?> typeToMatch : typesToMatch) {
 						dcl.excludeClass(typeToMatch.getName());
@@ -1948,8 +1950,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
-			// containsBeanDefinition 检测 beanDefinitionMap 中也就是在所有已经加载的类中检查是否定义beanName
 			// 如果是单例，则缓存从 FactoryBean 获得的对象。
+			// containsBeanDefinition 检测 beanDefinitionMap 中也就是在所有已经加载的类中检查是否定义beanName
 			if (mbd == null && containsBeanDefinition(beanName)) {
 				//将存储 XML 配置文件的 GenericBeanDefinition 转换为 RootBeanDefinition，
 				//如果指定 BeanName 是子 Bean 的话同时会合并父类的相关属性

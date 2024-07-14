@@ -36,9 +36,9 @@ include "spring-websocket"
 include "framework-bom"
 include "integration-tests"
 
-include 'spring-study-1'
-include 'spring-study-2'
-include 'spring-study-3'
+include 'spring-study-one'
+include 'spring-study-two'
+include 'spring-study-three'
 include 'spring-study-tuling'
 
 rootProject.name = "spring"

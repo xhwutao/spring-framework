@@ -109,9 +109,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/** Whether to allow eager class loading even for lazy-init beans. */
 	private boolean allowEagerClassLoading = true;
 
-	/** Optional OrderComparator for dependency Lists and arrays. */
+	/** Optional OrderComparator for dependency Lists and arrays.  */
 	@Nullable
-	private Comparator<Object> dependencyComparator;
+	private Comparator<Object> dependencyComparator;// 比较器 可以用来排序 获取@Priority注解的值,Ordered接口的值,@Order注解的值
 
 	/** Resolver to use for checking if a bean definition is an autowire candidate. */
 	private AutowireCandidateResolver autowireCandidateResolver = SimpleAutowireCandidateResolver.INSTANCE;

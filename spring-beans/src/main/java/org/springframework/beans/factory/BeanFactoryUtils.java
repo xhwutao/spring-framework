@@ -87,6 +87,7 @@ public abstract class BeanFactoryUtils {
 		//      2. 已存在，则直接返回，无需计算。
 		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
 			do {
+				//BeanFactory.FACTORY_BEAN_PREFIX = "&"
 				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
 			}
 			while (beanName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX));
